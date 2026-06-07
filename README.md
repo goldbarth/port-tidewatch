@@ -30,6 +30,15 @@ surfaces the result.
 
 * * *
 
+## Why this project
+
+The Hamburg port runs on reliable, observable, security-relevant
+infrastructure. tidewatch works the ingestion-and-alerting pattern in a
+domain I care about, and takes the next steps in my stack — Angular and
+Kubernetes/GitOps — on real ground rather than in the abstract.
+
+* * *
+
 ## Status
 
 Work in progress. The repository is built so that every intermediate state
@@ -73,7 +82,7 @@ implementation is not finished.
 
 * * *
 
-## Tech
+## Tech Stack
 
 | Concern           | Technology                                |
 |-------------------|-------------------------------------------|
@@ -90,22 +99,16 @@ implementation is not finished.
 
 ## Roadmap
 
-- [ ] Ingestion service: consume, threshold-evaluate, emit alert state
-- [ ] Simulator for gauge readings
-- [ ] OpenTelemetry tracing across the ingestion path
-- [ ] Integration tests with Testcontainers
-- [ ] Angular read-only dashboard (levels, status, trend)
-- [ ] End-to-end deploy on Azure Container Apps with CI/CD
-- [ ] Kubernetes manifests + Argo CD GitOps sync
+Built in milestones, each an intermediate state that stays coherent. The full
+issue-by-issue breakdown lives in **[`docs/ISSUES.md`](docs/ISSUES.md)**.
 
-* * *
-
-## Why this project
-
-The Hamburg port runs on reliable, observable, security-relevant
-infrastructure. tidewatch works the ingestion-and-alerting pattern in a
-domain I care about, and takes the next steps in my stack — Angular and
-Kubernetes/GitOps — on real ground rather than in the abstract.
+| Milestone | Focus | Status |
+|-----------|-------|--------|
+| **M1 · Foundation** | Repo scaffold, contracts, threshold configuration | Done |
+| **M2 · Ingestion** | RabbitMQ transport, consumer + dead-letter, per-gauge state, surge evaluator | In progress |
+| **M3 · Observability & Tests** | OpenTelemetry tracing, Testcontainers integration tests | Planned |
+| **M4 · Dashboard** | Angular read-only view — levels, status, trend | Planned |
+| **M5 · Deploy** | Azure Container Apps baseline → Kubernetes + Argo CD (GitOps) | Planned |
 
 * * *
 
