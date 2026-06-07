@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Tidewatch.Contracts/Tidewatch.Contracts.csproj" />
+    <Project Path="src/Tidewatch.Ingestion/Tidewatch.Ingestion.csproj" />
+    <Project Path="src/Tidewatch.Simulator/Tidewatch.Simulator.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Tidewatch.Ingestion.IntegrationTests/Tidewatch.Ingestion.IntegrationTests.csproj" />
+  </Folder>
+</Solution>

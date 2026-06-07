@@ -1,0 +1,27 @@
+namespace Tidewatch.Ingestion.Configuration;
+
+/// <summary>
+/// Bound to the <c>SurgeThresholds</c> section of appsettings.
+/// </summary>
+public sealed class SurgeThresholdOptions
+{
+    public const string SectionName = "SurgeThresholds";
+
+    /// <summary>Vertical reference datum, e.g. "NHN".</summary>
+    public string Reference { get; set; } = string.Empty;
+
+    /// <summary>Window over which the trend is evaluated.</summary>
+    public TimeSpan TrendWindow { get; set; }
+
+    /// <summary>Ordered list of stages, ascending by <see cref="SurgeStage.MinMeters"/>.</summary>
+    public IReadOnlyList<SurgeStage> Stages { get; set; } = [];
+}
+
+/// <summary>A single surge stage: a name and the level at which it begins.</summary>
+public sealed class SurgeStage
+{
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>Lower bound of the stage in metres.</summary>
+    public decimal MinMeters { get; set; }
+}

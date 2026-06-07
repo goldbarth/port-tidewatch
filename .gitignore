@@ -1,0 +1,39 @@
+# ---- .NET ----
+bin/
+obj/
+*.user
+*.suo
+.vs/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+project.lock.json
+*.nupkg
+
+# ---- Angular / Node ----
+frontend/**/node_modules/
+frontend/**/dist/
+frontend/**/.angular/
+frontend/**/coverage/
+npm-debug.log*
+yarn-error.log*
+
+# ---- Env / secrets ----
+*.env
+.env.*
+appsettings.*.local.json
+
+# ---- Editors / OS ----
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# ---- Claude Code ----
+.claude/
+CLAUDE.md
+
+# ---- Containers / deploy local state ----
+*.local.yaml
+deploy/k8s/**/secrets*.yaml
