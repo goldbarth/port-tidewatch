@@ -79,6 +79,7 @@ implementation is not finished.
 | 001 | [Threshold evaluation lives in the ingestion service](docs/adrs/001-threshold-logic-in-service.md) |
 | 002 | [Dashboard state structure](docs/adrs/002-angular-state-structure.md)                             |
 | 003 | [Azure Container Apps vs. Kubernetes + Argo CD](docs/adrs/003-container-apps-vs-kubernetes.md)     |
+| 004 | [Surge evaluator stage-determination algorithm](docs/adrs/004-surge-evaluator-algorithm.md)       |
 
 * * *
 
