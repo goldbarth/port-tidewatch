@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using Tidewatch.Contracts;
+using Tidewatch.Ingestion.Evaluation;
 using Tidewatch.Ingestion.State;
 using Tidewatch.Ingestion.Transport;
 
@@ -12,23 +13,27 @@ namespace Tidewatch.Ingestion.Consumer;
 /// <summary>
 /// Background service listening on the ingestion queue. Deserialises each message to a
 /// <see cref="Reading"/>; on deserialisation or basic validity failure it nacks the
-/// message to the dead-letter queue. Valid readings are added to the state holder — no
-/// threshold logic lives here. The evaluator is not yet wired into this path; stage
-/// determination is the next focused session (see <c>SurgeEvaluator</c>).
+/// message to the dead-letter queue. Valid readings are added to the state holder and
+/// the gauge's stage is re-evaluated; a stage change is applied through the state
+/// holder's single isolated point. No threshold logic lives here — that is the
+/// evaluator's job.
 /// </summary>
 public sealed class ReadingConsumer : BackgroundService
 {
     private readonly RabbitMqTransport _transport;
     private readonly GaugeStateHolder _state;
+    private readonly ISurgeEvaluator _evaluator;
     private readonly ILogger<ReadingConsumer> _logger;
 
     public ReadingConsumer(
         RabbitMqTransport transport,
         GaugeStateHolder state,
+        ISurgeEvaluator evaluator,
         ILogger<ReadingConsumer> logger)
     {
         _transport = transport;
         _state = state;
+        _evaluator = evaluator;
         _logger = logger;
     }
 
@@ -71,9 +76,17 @@ public sealed class ReadingConsumer : BackgroundService
             return;
         }
 
-        // Store the reading. Stage determination (the evaluator) is not wired in yet —
-        // see SurgeEvaluator; the window state is maintained so it is ready when it is.
+        // Store the reading, then re-evaluate the gauge's stage from its window. Only a
+        // genuine stage change is applied — ApplyStageChange also stamps ChangedAt, so
+        // calling it on every reading would reset the "last change" timestamp.
         _state.Add(reading!);
+
+        var currentStage = _state.GetAlertState(reading!.GaugeId)?.Stage;
+        var newStage = _evaluator.Evaluate(
+            reading.GaugeId, _state.GetWindow(reading.GaugeId), currentStage);
+
+        if (!string.Equals(newStage, currentStage, StringComparison.Ordinal))
+            _state.ApplyStageChange(reading.GaugeId, newStage, reading.Timestamp);
 
         await channel.BasicAckAsync(ea.DeliveryTag, multiple: false, cancellationToken);
     }
