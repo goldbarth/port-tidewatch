@@ -1,4 +1,8 @@
+using System.Diagnostics;
 using System.Text.Json;
+using OpenTelemetry;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using RabbitMQ.Client;
 using Tidewatch.Contracts;
 
@@ -9,6 +13,18 @@ const string exchange = "tidewatch.readings";
 const string routingKey = "reading";
 string[] gauges = ["CUX", "HEL", "WSV", "BHV"];
 var interval = TimeSpan.FromSeconds(2);
+
+// One span per published reading is the trace root. RabbitMQ.Client creates its own
+// publisher activity inside BasicPublishAsync — but only while a listener on
+// PublisherSourceName is registered — and then injects the W3C trace context into the
+// message headers, so the ingestion service can continue the same trace.
+using var simSource = new ActivitySource("Tidewatch.Simulator");
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .ConfigureResource(r => r.AddService("tidewatch-simulator"))
+    .AddSource("Tidewatch.Simulator")
+    .AddSource(RabbitMQActivitySource.PublisherSourceName)
+    .AddOtlpExporter()
+    .Build();
 
 var factory = new ConnectionFactory
 {
@@ -38,6 +54,10 @@ while (!cts.IsCancellationRequested)
 
         var reading = new Reading(gauge, decimal.Round(levels[gauge], 3), DateTimeOffset.UtcNow);
         var body = JsonSerializer.SerializeToUtf8Bytes(reading);
+
+        using var activity = simSource.StartActivity("publish reading", ActivityKind.Producer);
+        activity?.SetTag("gauge.id", reading.GaugeId);
+        activity?.SetTag("reading.value_m", (double)reading.Value);
 
         await channel.BasicPublishAsync(
             exchange, routingKey, mandatory: false,

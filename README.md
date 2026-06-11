@@ -55,7 +55,7 @@ is coherent — see the roadmap below for what is done and what is planned.
 
 * * *
 
-## Architecture (planned)
+## Architecture
 
 ```
 ┌─────────────┐    readings     ┌──────────────────┐  alerts / state    ┌─────────────┐

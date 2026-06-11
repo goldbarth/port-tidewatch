@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -6,6 +7,7 @@ using RabbitMQ.Client.Events;
 using Tidewatch.Contracts;
 using Tidewatch.Ingestion.Evaluation;
 using Tidewatch.Ingestion.State;
+using Tidewatch.Ingestion.Telemetry;
 using Tidewatch.Ingestion.Transport;
 
 namespace Tidewatch.Ingestion.Consumer;
@@ -55,6 +57,12 @@ public sealed class ReadingConsumer : BackgroundService
     private async Task HandleAsync(
         IChannel channel, BasicDeliverEventArgs ea, CancellationToken cancellationToken)
     {
+        // Continue the trace started by the publisher: the W3C context rides in the
+        // message headers and is recovered with RabbitMQ.Client's own extractor.
+        var parentContext = RabbitMQActivitySource.ContextExtractor(ea.BasicProperties);
+        using var activity = IngestionTelemetry.Source.StartActivity(
+            "ingest reading", ActivityKind.Consumer, parentContext);
+
         Reading? reading;
         try
         {
@@ -63,6 +71,8 @@ public sealed class ReadingConsumer : BackgroundService
         catch (JsonException ex)
         {
             _logger.LogWarning(ex, "Malformed reading; dead-lettering.");
+            activity?.AddEvent(new ActivityEvent("dead-lettered: malformed"));
+            activity?.SetStatus(ActivityStatusCode.Error, "malformed");
             await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false,
                 cancellationToken);
             return;
@@ -71,6 +81,8 @@ public sealed class ReadingConsumer : BackgroundService
         if (!IsValid(reading))
         {
             _logger.LogWarning("Invalid reading; dead-lettering.");
+            activity?.AddEvent(new ActivityEvent("dead-lettered: invalid"));
+            activity?.SetStatus(ActivityStatusCode.Error, "invalid");
             await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false,
                 cancellationToken);
             return;
@@ -85,8 +97,15 @@ public sealed class ReadingConsumer : BackgroundService
         var newStage = _evaluator.Evaluate(
             reading.GaugeId, _state.GetWindow(reading.GaugeId), currentStage);
 
+        activity?.SetTag("gauge.id", reading.GaugeId);
+        activity?.SetTag("surge.stage.previous", currentStage);
+        activity?.SetTag("surge.stage.current", newStage);
+
         if (!string.Equals(newStage, currentStage, StringComparison.Ordinal))
+        {
+            activity?.AddEvent(new ActivityEvent("stage changed"));
             _state.ApplyStageChange(reading.GaugeId, newStage, reading.Timestamp);
+        }
 
         await channel.BasicAckAsync(ea.DeliveryTag, multiple: false, cancellationToken);
     }
