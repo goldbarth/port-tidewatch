@@ -1,10 +1,14 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using RabbitMQ.Client;
 using Tidewatch.Ingestion.Configuration;
 using Tidewatch.Ingestion.Consumer;
 using Tidewatch.Ingestion.Evaluation;
 using Tidewatch.Ingestion.State;
+using Tidewatch.Ingestion.Telemetry;
 using Tidewatch.Ingestion.Transport;
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -31,7 +35,15 @@ builder.Services.AddSingleton<ISurgeEvaluator, SurgeEvaluator>();
 // Consumer as a hosted service.
 builder.Services.AddHostedService<ReadingConsumer>();
 
-// OpenTelemetry is a later phase — not wired here.
+// Tracing across the ingestion path: our own spans plus RabbitMQ.Client's subscriber
+// activity (which recovers the trace context published by the simulator). OTLP endpoint
+// defaults to localhost:4317, overridable via OTEL_EXPORTER_OTLP_ENDPOINT.
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(r => r.AddService("tidewatch-ingestion"))
+    .WithTracing(tracing => tracing
+        .AddSource(IngestionTelemetry.SourceName)
+        .AddSource(RabbitMQActivitySource.SubscriberSourceName)
+        .AddOtlpExporter());
 
 var host = builder.Build();
 host.Run();
