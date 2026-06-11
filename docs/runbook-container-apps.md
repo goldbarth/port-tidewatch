@@ -33,6 +33,13 @@ On success azd prints outputs, including:
 - `INGESTION_FQDN` — the public ingestion host
 - `DASHBOARD_URL` — the Static Web App URL
 
+> **Known issue — the dashboard step fails under azd.** azd deploys the Static Web App
+> with the SWA CLI using the environment name `default`, which the service rejects
+> (`The environment name "default" is invalid`). The infra, ingestion, and simulator
+> still provision/deploy fine; deploy the dashboard manually to the `production`
+> environment instead (step 2b). If azd stopped before the container apps deployed, run
+> `azd deploy ingestion` and `azd deploy simulator`.
+
 ## 2. Wire the dashboard to the API (cross-origin)
 
 The SPA and the API are on different origins, so two one-time links are needed.
@@ -46,17 +53,20 @@ az containerapp update \
 ```
 (`Cors__AllowedOrigin` → the `Cors:AllowedOrigin` config the API reads.)
 
-**b) Point the SPA at the API:** edit `frontend/public/config.json`:
-```json
-{ "apiBaseUrl": "https://<INGESTION_FQDN>" }
-```
-then redeploy just the dashboard:
+**b) Point the SPA at the API and deploy it manually.** Set the API base URL, rebuild,
+and deploy to the `production` environment with the SWA CLI (works around the azd
+`default`-env issue above). Run from the repo root; replace the host with your
+`INGESTION_FQDN` and the SWA name with yours (`az staticwebapp list -g rg-<env>`):
 ```bash
-azd deploy dashboard
+printf '{\n  "apiBaseUrl": "https://<INGESTION_FQDN>"\n}\n' > frontend/public/config.json
+( cd frontend && npm run build )
+TOKEN=$(az staticwebapp secrets list -n <swa-name> -g rg-<AZURE_ENV_NAME> --query "properties.apiKey" -o tsv)
+npx -y @azure/static-web-apps-cli deploy frontend/dist/tidewatch-dashboard/browser --deployment-token "$TOKEN" --env production
+rm -f .env   # the SWA CLI writes the deployment token here — do not commit it
 ```
 > Empty `apiBaseUrl` keeps the SPA on relative `/api` (the Kubernetes/dev behaviour) —
-> only the cloud stack needs it set. Revert it before committing if you want the repo
-> default to stay same-origin.
+> only the cloud stack needs it set. Revert it before committing
+> (`git checkout frontend/public/config.json`) so the repo default stays same-origin.
 
 ## 3. Verify
 
@@ -98,6 +108,8 @@ registration with a GitHub federated credential):
 
 | Symptom | Cause / fix |
 |---------|-------------|
+| `AKSCapacityHeavyUsage` creating the Container Apps environment | Azure-side capacity in that region (CA environments run on AKS). Switch region: `azd down --purge --force`, `azd env set AZURE_LOCATION northeurope` (or `germanywestcentral`/`swedencentral`), `azd up`. The RG region is immutable, so tear down first. |
+| Dashboard step fails: `The environment name "default" is invalid` | azd deploys the SWA with env `default`, which the service rejects. Deploy manually with `--env production` (step 2b). |
 | `azd up` fails creating the Static Web App | SWA is region-limited. Set `staticWebAppLocation` (e.g. `westeurope`, `eastus2`) — it is a separate Bicep param from the main `location`. |
 | ingestion revision can't pull from ACR | AcrPull role assignment may still be propagating on the first deploy. Re-run `azd deploy ingestion` after a minute. |
 | ingestion can't reach the broker | rabbitmq uses internal TCP ingress on 5672; the API reaches it at `rabbitmq` (the `RabbitMq__HostName` env). Check the rabbitmq revision is running. |

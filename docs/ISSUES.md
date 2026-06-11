@@ -10,6 +10,7 @@ Milestones:
 - **M3 – Observability & Tests**: OpenTelemetry, integration tests
 - **M4 – Dashboard**: Angular read-only view
 - **M5 – Deploy**: Container Apps baseline, then Kubernetes + Argo CD
+- **M6 – Demo & polish (v1.1)**: storyful data, dashboard polish, richer signals, alert events
 
 ---
 
@@ -117,3 +118,88 @@ azd + Bicep infrastructure (`deploy/container-apps`) and GitHub Actions (CI on
 push/PR, manual azd deploy via OIDC). The dashboard runs on Azure Static Web Apps
 (Free) and reaches the ingestion API cross-origin via CORS. Deployed on demand
 within the free grant; torn down to hold €0.
+
+---
+
+## M6 – Demo & polish (v1.1)
+
+Post-v1 work. v1 (M1–M5) is complete and presentable; these items make it
+demonstrable and richer. Unlike the deliberately terse M1–M5 items, each has
+explicit acceptance criteria.
+
+### Storm-surge scenario in the simulator
+**Labels:** simulator, demo
+**Milestone:** M6
+The simulator's pure random walk is clamped at 5.0 m, so `severe` (5.50 m) is
+never reached and the most important alert stage cannot be shown; a recording of
+random noise tells no story. Drive the simulator with a tide baseline plus a
+scripted surge event so the alert cascade (normal → warning → severe → recede) is
+demonstrable. Input only — no contract or architecture change.
+
+**Acceptance criteria:**
+- [ ] At least one gauge crosses 4.50 m (warning) **and** 5.50 m (severe), then
+      recedes to normal, within a few minutes.
+- [ ] At least one gauge stays `normal` throughout, for contrast.
+- [ ] The surge cycle is parameterisable (period / peak via const or env), with a
+      tide baseline so motion looks plausible, not jagged noise.
+- [ ] The evaluator does not flap during the rise (single-outlier damping holds).
+- [ ] `Reading` contract and the publish path are unchanged; only the simulator
+      changes.
+
+### Dashboard visual polish
+**Labels:** frontend, demo
+**Milestone:** M6
+Raise the dashboard from functional to presentable (use the `frontend-design`
+skill). Add context and a system overview, refine the visuals.
+
+**Acceptance criteria:**
+- [ ] Sparklines show the warning (4.50) and severe (5.50) reference lines.
+- [ ] A header summary shows the count of gauges per stage and the overall status
+      / highest current level.
+- [ ] "seit HH:MM:SS" is replaced by relative time in the current stage
+      (e.g. "warning for 3 min").
+- [ ] Refined layout, typography, and spacing; stage colour changes are animated.
+- [ ] A last-updated / connection indicator makes stale data visible.
+- [ ] Still read-only; same-origin relative `/api` behaviour (k8s/dev) preserved.
+
+### Richer monitoring signals
+**Labels:** ingestion, frontend, demo
+**Milestone:** M6
+More to watch per gauge than the level alone.
+
+**Acceptance criteria:**
+- [ ] API DTO gains per-gauge rate-of-change (m/min over the window) and
+      time-in-current-stage; optionally window min/max.
+- [ ] New fields are computed in the API mapper; the state holder stays raw
+      (per ADR-002).
+- [ ] The dashboard surfaces them (e.g. a ▲/▼ trend arrow with the rate).
+- [ ] Unit/integration coverage for the computed fields.
+
+### Demo assets
+**Labels:** docs, demo
+**Milestone:** M6
+Capture the showcase so it survives beyond a live run.
+
+**Acceptance criteria:**
+- [ ] A short (≤ 90 s) screen recording of the surge scenario showing the stage
+      cascade across gauges.
+- [ ] README updated with a dashboard screenshot (and/or a clip/GIF).
+- [ ] A brief "what you're seeing" caption tying it to the WADI threshold story.
+
+### Alert-event publishing (deferred from v1.0)
+**Labels:** ingestion, v1.1
+**Milestone:** M6
+The v1.1.0 step recorded in ADR-001: the single `ApplyStageChange` chokepoint
+also publishes an alert event so additional consumers (notification, audit) can
+subscribe.
+
+**Acceptance criteria:**
+- [ ] On a genuine stage change, `ApplyStageChange` publishes an alert event
+      (gauge, previous → new stage, level, timestamp) to a dedicated exchange.
+- [ ] Publishing is the only addition at that chokepoint; the state-update
+      behaviour is unchanged, and no event is published when the stage holds.
+- [ ] The publish is traced consistently with the existing OpenTelemetry path.
+- [ ] Exchange/queue topology is declared in `RabbitMqTransport`; no threshold
+      logic is added to the consumer.
+- [ ] Integration test: one stage transition yields exactly one alert event;
+      a held stage yields none.

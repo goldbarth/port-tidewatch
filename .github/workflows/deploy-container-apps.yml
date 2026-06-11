@@ -1,0 +1,36 @@
+name: Deploy (Container Apps)
+
+# Manual only — keeps the subscription at €0 unless a deploy is explicitly triggered.
+# Tear the environment down afterwards (azd down / delete the resource group).
+on:
+  workflow_dispatch:
+
+# Required for azd OIDC login (no stored client secret).
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      # Configure these as GitHub repository Variables before running:
+      AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
+      AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install azd
+        uses: Azure/setup-azd@v2
+
+      - name: Log in with azd (federated OIDC)
+        run: |
+          azd auth login \
+            --client-id "${{ vars.AZURE_CLIENT_ID }}" \
+            --federated-credential-provider github \
+            --tenant-id "${{ vars.AZURE_TENANT_ID }}"
+
+      - name: Provision infrastructure and deploy services
+        run: azd up --no-prompt
+        working-directory: deploy/container-apps
