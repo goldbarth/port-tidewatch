@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using RabbitMQ.Client;
+using Tidewatch.Ingestion.Api;
 using Tidewatch.Ingestion.Configuration;
 using Tidewatch.Ingestion.Consumer;
 using Tidewatch.Ingestion.Evaluation;
@@ -11,7 +13,7 @@ using Tidewatch.Ingestion.State;
 using Tidewatch.Ingestion.Telemetry;
 using Tidewatch.Ingestion.Transport;
 
-var builder = Host.CreateApplicationBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
 // Options binding with startup validation.
 builder.Services
@@ -45,5 +47,12 @@ builder.Services.AddOpenTelemetry()
         .AddSource(RabbitMQActivitySource.SubscriberSourceName)
         .AddOtlpExporter());
 
-var host = builder.Build();
-host.Run();
+var app = builder.Build();
+
+// Read-only HTTP surface for the dashboard. The reading consumer keeps running as a
+// hosted service alongside it.
+app.MapGet("/healthz", () => Results.Ok("ok"));
+app.MapGet("/api/gauges", (GaugeStateHolder state) =>
+    state.Snapshot().Select(GaugeMapper.ToDto));
+
+app.Run();

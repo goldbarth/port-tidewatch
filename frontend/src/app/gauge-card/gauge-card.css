@@ -1,0 +1,64 @@
+.card {
+  border: 1px solid #ddd;
+  border-left: 6px solid var(--stage, #999);
+  border-radius: 8px;
+  padding: 1rem;
+  color: var(--stage, #333);
+  background: #fff;
+}
+
+.stage-normal {
+  --stage: #2e7d32;
+}
+.stage-warning {
+  --stage: #ed6c02;
+}
+.stage-severe {
+  --stage: #c62828;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #222;
+}
+
+.badge {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: var(--stage);
+  color: #fff;
+}
+
+.level {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin: 0.5rem 0;
+  color: #222;
+}
+
+.level small {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: #777;
+}
+
+.spark {
+  width: 100%;
+  height: 36px;
+}
+
+footer {
+  font-size: 0.75rem;
+  color: #777;
+  margin-top: 0.25rem;
+}

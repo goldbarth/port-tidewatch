@@ -1,0 +1,13 @@
+<article class="card" [class]="'stage-' + gauge().stage">
+  <header>
+    <h2>{{ gauge().gaugeId }}</h2>
+    <span class="badge">{{ gauge().stage }}</span>
+  </header>
+  <p class="level">{{ gauge().level | number: '1.2-2' }} <small>m NHN</small></p>
+  <svg class="spark" viewBox="0 0 100 30" preserveAspectRatio="none">
+    <polyline [attr.points]="sparkline()" fill="none" stroke="currentColor" stroke-width="1" />
+  </svg>
+  @if (gauge().changedAt) {
+    <footer>seit {{ gauge().changedAt | date: 'HH:mm:ss' }}</footer>
+  }
+</article>

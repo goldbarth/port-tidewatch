@@ -11,7 +11,7 @@ using Tidewatch.Contracts;
 
 const string exchange = "tidewatch.readings";
 const string routingKey = "reading";
-string[] gauges = ["CUX", "HEL", "WSV", "BHV"];
+string[] gauges = ["CUX", "HEL", "STP", "BHV"];
 var interval = TimeSpan.FromSeconds(2);
 
 // One span per published reading is the trace root. RabbitMQ.Client creates its own
