@@ -47,6 +47,23 @@ public sealed class GaugeStateHolder
         _gauges.TryGetValue(gaugeId, out var state) ? state.Alert : null;
 
     /// <summary>
+    /// Point-in-time snapshot of every gauge: its current reading window and alert
+    /// state. Read-only — for the dashboard API. Each gauge is copied under its own
+    /// lock, so the snapshot is consistent per gauge. No view concerns here; trend
+    /// shaping happens in the API mapper.
+    /// </summary>
+    public IReadOnlyList<GaugeSnapshot> Snapshot()
+    {
+        var result = new List<GaugeSnapshot>(_gauges.Count);
+        foreach (var (id, state) in _gauges)
+        {
+            lock (state.Gate)
+                result.Add(new GaugeSnapshot(id, state.Window.ToArray(), state.Alert));
+        }
+        return result;
+    }
+
+    /// <summary>
     /// Isolated point called when the evaluator detects a stage change. For now it
     /// only updates state; in v1.1.0 this same point also publishes the alert event.
     /// </summary>
@@ -66,3 +83,7 @@ public sealed class GaugeStateHolder
         public AlertState? Alert { get; set; }
     }
 }
+
+/// <summary>A gauge's raw reading window and current alert at snapshot time.</summary>
+public sealed record GaugeSnapshot(
+    string GaugeId, IReadOnlyList<Reading> Window, AlertState? Alert);

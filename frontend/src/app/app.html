@@ -1,0 +1,8 @@
+<h1>Port Tidewatch</h1>
+<main class="grid">
+  @for (g of gauges(); track g.gaugeId) {
+    <app-gauge-card [gauge]="g" />
+  } @empty {
+    <p class="waiting">Warte auf Daten…</p>
+  }
+</main>
