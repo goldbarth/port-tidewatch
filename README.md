@@ -5,7 +5,7 @@
 **A small, focused ingestion service for port water-level telemetry, with
 threshold-based storm-surge alerting and a read-only monitoring dashboard.**
 
-![Status](https://img.shields.io/badge/status-work_in_progress-yellow)
+[![CI](https://github.com/goldbarth/port-tidewatch/actions/workflows/ci.yml/badge.svg)](https://github.com/goldbarth/port-tidewatch/actions/workflows/ci.yml)  
 ![.NET](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)
 ![RabbitMQ](https://img.shields.io/badge/RabbitMQ-FF6600?logo=rabbitmq&logoColor=white)
 ![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-000000?logo=opentelemetry&logoColor=white)
@@ -41,8 +41,8 @@ Kubernetes/GitOps — on real ground rather than in the abstract.
 
 ## Status
 
-Work in progress. The repository is built so that every intermediate state
-is coherent — see the roadmap below for what is done and what is planned.
+Milestones M1–M5 are complete. The repository is built so that every
+intermediate state is coherent — see the roadmap below.
 
 ## What it does
 
@@ -60,7 +60,7 @@ is coherent — see the roadmap below for what is done and what is planned.
 ```
 ┌─────────────┐    readings     ┌──────────────────┐  alerts / state    ┌─────────────┐
 │  simulator  │ ──────────────▶ │ ingestion service│ ─────────────────▶ │  dashboard  │
-│   (.NET)    │    RabbitMQ     │      (.NET)      │     REST / SSE     │  (Angular)  │
+│   (.NET)    │    RabbitMQ     │      (.NET)      │   REST (polling)   │  (Angular)  │
 └─────────────┘                 └──────────────────┘                    └─────────────┘
                                           │
                                           │ poison messages
@@ -109,7 +109,24 @@ issue-by-issue breakdown lives in **[`docs/ISSUES.md`](docs/ISSUES.md)**.
 | **M2 · Ingestion** | RabbitMQ transport, consumer + dead-letter, per-gauge state, surge evaluator | Done        |
 | **M3 · Observability & Tests** | OpenTelemetry tracing, Testcontainers integration tests | Done        |
 | **M4 · Dashboard** | Angular read-only view — levels, status, trend | Done |
-| **M5 · Deploy** | Azure Container Apps baseline → Kubernetes + Argo CD (GitOps) | In Progress     |
+| **M5 · Deploy** | Kubernetes + Argo CD (GitOps, primary) and Azure Container Apps (IaC + CI) | Done |
+
+> **M5 ordering:** Kubernetes + Argo CD is the primary deployment, run on a local
+> cluster to stay at €0; Azure Container Apps ships as IaC + CI, deployed on demand.
+> The reasoning is in [ADR-003](docs/adrs/003-container-apps-vs-kubernetes.md).
+
+* * *
+
+## Running it
+
+| Stack | Runbook |
+|-------|---------|
+| Local dev (broker + ingestion + simulator + `ng serve`) | [runbook-local-dashboard.md](docs/runbook-local-dashboard.md) |
+| Kubernetes + Argo CD (local kind, GitOps) | [runbook-k8s-argocd.md](docs/runbook-k8s-argocd.md) |
+| Azure Container Apps (azd) | [runbook-container-apps.md](docs/runbook-container-apps.md) |
+
+Build, test, and run commands for the .NET solution are in
+[`CLAUDE.md`](CLAUDE.md).
 
 * * *
 
