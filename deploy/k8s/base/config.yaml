@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tidewatch-config
+  namespace: tidewatch
+data:
+  # Ingestion: override the appsettings RabbitMq host to the in-cluster service.
+  RabbitMq__HostName: rabbitmq
+  # Simulator: reads RABBITMQ_HOST.
+  RABBITMQ_HOST: rabbitmq
+  # Both apps export OTLP traces to the in-cluster Jaeger.
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317

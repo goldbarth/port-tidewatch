@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: tidewatch
+
+resources:
+  - namespace.yaml
+  - config.yaml
+  - rabbitmq.yaml
+  - jaeger.yaml
+  - ingestion.yaml
+  - simulator.yaml
+  - dashboard.yaml
+  - ingress.yaml
+
+# Labels on metadata only (not selectors), so existing selectors stay immutable.
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: tidewatch
+    includeSelectors: false

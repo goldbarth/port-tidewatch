@@ -1,0 +1,8 @@
+**/bin/
+**/obj/
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+**/.vs/
+.git/
+.idea/
