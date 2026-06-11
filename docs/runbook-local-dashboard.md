@@ -46,9 +46,17 @@ ASPNETCORE_URLS=http://localhost:5080 dotnet run --project src/Tidewatch.Ingesti
 
 Wait for `Now listening on: http://localhost:5080`. Leave it running.
 
-> The service exports OTLP traces to `localhost:4317`. If no collector/Jaeger is
-> running you'll see periodic export-failure log lines — harmless, the API and
-> consumer keep working. To see traces, run a Jaeger all-in-one exposing 4317.
+> The service (and the simulator) export OTLP traces to `localhost:4327`, set in
+> each project's `launchSettings.json` — a **dedicated** Jaeger, kept separate
+> from any other OTLP backend already on the default `4317`. Start it with:
+>
+> ```bash
+> docker run -d --rm --name tw-jaeger -p 16687:16686 -p 4327:4317 jaegertracing/all-in-one
+> ```
+>
+> Trace UI: http://localhost:16687 → service `tidewatch-ingestion`. If no Jaeger
+> is running you'll see periodic export-failure log lines — harmless, the API and
+> consumer keep working.
 
 ## 3. Start the simulator (generates readings)
 
