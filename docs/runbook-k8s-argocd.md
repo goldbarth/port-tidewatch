@@ -124,5 +124,6 @@ Everything was in the cluster, so this removes it all. €0, nothing left runnin
 | Pods `ImagePullBackOff` for `tidewatch-*` | Images not loaded into kind. Re-run step 3 `kind load`. |
 | Argo CD app `OutOfSync`/can't fetch | Manifests not pushed to `main`, or wrong `repoURL` in `application.yaml`. |
 | `http://localhost/` not reachable | ingress-nginx not ready (step 2), or kind created without `kind-cluster.yaml` port mappings. |
+| `kind create` fails: `Bind for 0.0.0.0:443 failed: port is already allocated` | Host port 80/443 is taken by another container/service. Edit `kind-cluster.yaml` to map a free `hostPort` (e.g. `8443`/`8080`) and use that in the URLs. |
 | `ingestion` CrashLoop | Check it can reach `rabbitmq`: `kubectl logs -n tidewatch deploy/ingestion`. RabbitMQ may still be starting. |
 | Code change not reflected | Rebuild image → `kind load` → `kubectl rollout restart deployment/<name> -n tidewatch`. |
