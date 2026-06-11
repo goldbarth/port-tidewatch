@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tidewatch
+  namespace: tidewatch
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          # Longest-prefix match: /api goes to the ingestion API, everything else
+          # to the dashboard SPA. Same origin, so the SPA's relative /api calls
+          # need no CORS.
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: ingestion
+                port:
+                  number: 8080
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dashboard
+                port:
+                  number: 80
