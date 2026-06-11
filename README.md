@@ -41,7 +41,8 @@ Kubernetes/GitOps — on real ground rather than in the abstract.
 
 ## Status
 
-Milestones M1–M5 are complete. The repository is built so that every
+Milestones M1–M5 are complete — v1.0 is presentable end to end. M6 (demo &
+polish, v1.1) is post-v1 work in progress. The repository is built so that every
 intermediate state is coherent — see the roadmap below.
 
 ## What it does
@@ -110,6 +111,7 @@ issue-by-issue breakdown lives in **[`docs/ISSUES.md`](docs/ISSUES.md)**.
 | **M3 · Observability & Tests** | OpenTelemetry tracing, Testcontainers integration tests | Done        |
 | **M4 · Dashboard** | Angular read-only view — levels, status, trend | Done |
 | **M5 · Deploy** | Kubernetes + Argo CD (GitOps, primary) and Azure Container Apps (IaC + CI) | Done |
+| **M6 · Demo & polish (v1.1)** | Storm-surge scenario, dashboard polish, richer signals, demo assets, alert events | In progress |
 
 > **M5 ordering:** Kubernetes + Argo CD is the primary deployment, run on a local
 > cluster to stay at €0; Azure Container Apps ships as IaC + CI, deployed on demand.
@@ -125,8 +127,25 @@ issue-by-issue breakdown lives in **[`docs/ISSUES.md`](docs/ISSUES.md)**.
 | Kubernetes + Argo CD (local kind, GitOps) | [runbook-k8s-argocd.md](docs/runbook-k8s-argocd.md) |
 | Azure Container Apps (azd) | [runbook-container-apps.md](docs/runbook-container-apps.md) |
 
-Build, test, and run commands for the .NET solution are in
-[`CLAUDE.md`](CLAUDE.md).
+### .NET solution commands
+
+The solution is a `.slnx` — needs the **.NET 10 SDK**.
+
+```bash
+# Build / restore
+dotnet build port-tidewatch.slnx
+dotnet restore port-tidewatch.slnx
+
+# Run the ingestion service (needs a reachable RabbitMQ — see appsettings RabbitMq section)
+dotnet run --project src/Tidewatch.Ingestion
+
+# Run the simulator (publishes Reading messages; RABBITMQ_HOST env var overrides host)
+dotnet run --project src/Tidewatch.Simulator
+
+# Tests (Testcontainers — Docker daemon must be running; it starts a RabbitMQ container)
+dotnet test
+dotnet test --filter "FullyQualifiedName~<TestClassOrMethod>"   # single test / class
+```
 
 * * *
 
