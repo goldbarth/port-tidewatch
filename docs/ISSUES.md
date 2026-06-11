@@ -97,15 +97,23 @@ recent-history trend. Read-only. State structure to be recorded in ADR 0002.
 
 ## M5 – Deploy
 
+> **Ordering note (ADR-003):** Kubernetes + Argo CD is the primary deployment,
+> run on a local kind cluster to stay at €0; Azure Container Apps ships as IaC +
+> CI, deployed on demand and torn down. This inverts the original
+> baseline-first framing below. Both are delivered — see the runbooks:
+> [k8s + Argo CD](runbook-k8s-argocd.md), [Container Apps](runbook-container-apps.md).
+
+### Kubernetes manifests + Argo CD GitOps sync
+**Labels:** deploy
+**Milestone:** M5
+Kustomize manifests (`deploy/k8s/base`) for rabbitmq, ingestion, simulator,
+dashboard, and jaeger, with an Ingress for same-origin `/api` routing. An Argo CD
+`Application` syncs them from the repo; the full flow runs on a local kind cluster.
+
 ### End-to-end deploy on Azure Container Apps with CI/CD
 **Labels:** deploy
 **Milestone:** M5
-Working end-to-end deploy on Container Apps with a CI/CD pipeline. This is the
-safe baseline — the project is complete and presentable from here.
-
-### Kubernetes manifests + Argo CD GitOps sync
-**Labels:** deploy, stretch
-**Milestone:** M5
-Manifests and Argo CD GitOps sync, layered on top of the Container Apps
-baseline. Hard time-box: if the sync is not stable by the cutoff, document the
-plan and the open question in ADR 0003 rather than leaving a broken cluster.
+azd + Bicep infrastructure (`deploy/container-apps`) and GitHub Actions (CI on
+push/PR, manual azd deploy via OIDC). The dashboard runs on Azure Static Web Apps
+(Free) and reaches the ingestion API cross-origin via CORS. Deployed on demand
+within the free grant; torn down to hold €0.

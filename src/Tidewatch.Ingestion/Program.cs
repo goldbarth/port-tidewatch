@@ -37,6 +37,17 @@ builder.Services.AddSingleton<ISurgeEvaluator, SurgeEvaluator>();
 // Consumer as a hosted service.
 builder.Services.AddHostedService<ReadingConsumer>();
 
+// CORS for the dashboard when it is served from a different origin (Static Web Apps in
+// the Container Apps stack). The origin comes from Cors:AllowedOrigin; left unset in the
+// Kubernetes/dev stacks, where the dashboard is same-origin (Ingress / dev proxy) and
+// no policy is needed.
+var corsOrigin = builder.Configuration["Cors:AllowedOrigin"];
+builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
+{
+    if (!string.IsNullOrWhiteSpace(corsOrigin))
+        policy.WithOrigins(corsOrigin).AllowAnyHeader().AllowAnyMethod();
+}));
+
 // Tracing across the ingestion path: our own spans plus RabbitMQ.Client's subscriber
 // activity (which recovers the trace context published by the simulator). OTLP endpoint
 // defaults to localhost:4317, overridable via OTEL_EXPORTER_OTLP_ENDPOINT.
@@ -48,6 +59,8 @@ builder.Services.AddOpenTelemetry()
         .AddOtlpExporter());
 
 var app = builder.Build();
+
+app.UseCors();
 
 // Read-only HTTP surface for the dashboard. The reading consumer keeps running as a
 // hosted service alongside it.
