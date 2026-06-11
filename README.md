@@ -103,13 +103,13 @@ implementation is not finished.
 Built in milestones, each an intermediate state that stays coherent. The full
 issue-by-issue breakdown lives in **[`docs/ISSUES.md`](docs/ISSUES.md)**.
 
-| Milestone | Focus | Status |
-|-----------|-------|--------|
-| **M1 · Foundation** | Repo scaffold, contracts, threshold configuration | Done |
-| **M2 · Ingestion** | RabbitMQ transport, consumer + dead-letter, per-gauge state, surge evaluator | In progress |
-| **M3 · Observability & Tests** | OpenTelemetry tracing, Testcontainers integration tests | Planned |
-| **M4 · Dashboard** | Angular read-only view — levels, status, trend | Planned |
-| **M5 · Deploy** | Azure Container Apps baseline → Kubernetes + Argo CD (GitOps) | Planned |
+| Milestone | Focus | Status      |
+|-----------|-------|-------------|
+| **M1 · Foundation** | Repo scaffold, contracts, threshold configuration | Done        |
+| **M2 · Ingestion** | RabbitMQ transport, consumer + dead-letter, per-gauge state, surge evaluator | Done        |
+| **M3 · Observability & Tests** | OpenTelemetry tracing, Testcontainers integration tests | Done        |
+| **M4 · Dashboard** | Angular read-only view — levels, status, trend | In Progress |
+| **M5 · Deploy** | Azure Container Apps baseline → Kubernetes + Argo CD (GitOps) | Planned     |
 
 * * *
 
