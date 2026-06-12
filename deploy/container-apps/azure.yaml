@@ -27,3 +27,15 @@ services:
     language: js
     host: staticwebapp
     dist: dist/tidewatch-dashboard/browser
+    # The Angular build ships config.json with the <INGESTION_FQDN> sentinel. After
+    # packaging (build done, dist exists) and before upload, swap it for the real
+    # ingestion FQDN that bicep exports as the INGESTION_FQDN azd output. The build stays
+    # origin-agnostic; only the SWA deploy gets the cross-origin API base baked in.
+    hooks:
+      postpackage:
+        posix:
+          shell: sh
+          run: sed -i "s|https://<INGESTION_FQDN>|https://${INGESTION_FQDN}|" dist/tidewatch-dashboard/browser/config.json
+        windows:
+          shell: pwsh
+          run: (Get-Content dist/tidewatch-dashboard/browser/config.json) -replace 'https://<INGESTION_FQDN>', "https://$env:INGESTION_FQDN" | Set-Content dist/tidewatch-dashboard/browser/config.json

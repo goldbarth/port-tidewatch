@@ -16,6 +16,7 @@ threshold-based storm-surge alerting and a read-only monitoring dashboard.
 <p align="center">
 <a href="https://github.com/goldbarth/port-tidewatch/releases"><img src="https://img.shields.io/github/v/release/goldbarth/port-tidewatch?logo=github&label=release" alt="Release"></a>
 <a href="https://github.com/goldbarth/port-tidewatch/actions/workflows/ci.yml"><img src="https://github.com/goldbarth/port-tidewatch/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+<a href="https://github.com/goldbarth/port-tidewatch/actions/workflows/deploy-container-apps.yml"><img src="https://img.shields.io/github/actions/workflow/status/goldbarth/port-tidewatch/deploy-container-apps.yml?label=deploy&logo=github" alt="Deploy"></a>
 </p>
 
 <p align="center">
