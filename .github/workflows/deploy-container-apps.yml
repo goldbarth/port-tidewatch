@@ -5,7 +5,7 @@ name: Deploy (Container Apps)
 on:
   workflow_dispatch:
 
-# Required for azd OIDC login (no stored client secret).
+# Required for azd / azure-login OIDC (no stored client secret).
 permissions:
   id-token: write
   contents: read
@@ -31,6 +31,55 @@ jobs:
             --federated-credential-provider github \
             --tenant-id "${{ vars.AZURE_TENANT_ID }}"
 
-      - name: Provision infrastructure and deploy services
-        run: azd up --no-prompt
+      # Provision infra and deploy the two containers with azd. The dashboard is handled
+      # separately below: azd deploys the Static Web App to the env named "default", which
+      # the SWA content server now rejects ("environment name default is invalid"). The swa
+      # CLI deploys cleanly to the "production" env, so we drive that step ourselves.
+      - name: Provision infrastructure
         working-directory: deploy/container-apps
+        run: azd provision --no-prompt
+
+      - name: Deploy containers (ingestion, simulator)
+        working-directory: deploy/container-apps
+        run: |
+          azd deploy ingestion --no-prompt
+          azd deploy simulator --no-prompt
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # Build the Angular app, then swap the <INGESTION_FQDN> sentinel in config.json for
+      # the real FQDN that bicep exports as the INGESTION_FQDN azd output. Same substitution
+      # the azure.yaml postpackage hook does for local `azd` runs.
+      - name: Build dashboard
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+          FQDN=$(azd env get-value INGESTION_FQDN --cwd ../deploy/container-apps)
+          sed -i "s|https://<INGESTION_FQDN>|https://${FQDN}|" \
+            dist/tidewatch-dashboard/browser/config.json
+
+      - name: Log in to Azure (for the SWA deployment token)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      # Resolve the SWA by its azd tags (name varies per environment), pull its deployment
+      # token, and deploy to the "production" environment via the swa CLI.
+      - name: Deploy dashboard to Static Web App
+        working-directory: frontend
+        run: |
+          QUERY="[?tags.\"azd-env-name\"=='${AZURE_ENV_NAME}'] | [0]"
+          APP=$(az staticwebapp list --query "${QUERY}.name" -o tsv)
+          RG=$(az staticwebapp list --query "${QUERY}.resourceGroup" -o tsv)
+          TOKEN=$(az staticwebapp secrets list -n "$APP" -g "$RG" \
+            --query properties.apiKey -o tsv)
+          npx --yes @azure/static-web-apps-cli@2 deploy dist/tidewatch-dashboard/browser \
+            --env production --deployment-token "$TOKEN"
