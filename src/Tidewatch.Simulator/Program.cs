@@ -11,8 +11,32 @@ using Tidewatch.Contracts;
 
 const string exchange = "tidewatch.readings";
 const string routingKey = "reading";
-string[] gauges = ["CUX", "HEL", "STP", "BHV"];
 var interval = TimeSpan.FromSeconds(2);
+
+// Each gauge has a role driving its signal (see GaugeProfile below): one gauge runs a
+// scripted surge that crosses warning (4.50 m) and severe (5.50 m) then recedes; the
+// rest stay normal for contrast. Level = baseline + tide + surge + small noise. The
+// surge is a smooth raised-cosine bump so the rise is monotone and the evaluator does
+// not flap. Surge peak/period are parameterisable via env (SURGE_PEAK_M / SURGE_PERIOD_S).
+const decimal tideAmplitude = 0.30m;            // gentle rolling tide, never trips warning alone
+const double tidePeriodS = 60.0;                // seconds per tide cycle
+const decimal noiseAmplitude = 0.02m;           // tiny — keeps trend clean
+const decimal defaultSurgePeak = 5.80m;         // absolute level the surge gauge peaks at
+const double defaultSurgePeriodS = 180.0;       // one full surge cycle every 3 min
+
+var surgePeak = decimal.TryParse(Environment.GetEnvironmentVariable("SURGE_PEAK_M"), out var p)
+    ? p : defaultSurgePeak;
+var surgePeriodS = double.TryParse(Environment.GetEnvironmentVariable("SURGE_PERIOD_S"), out var s)
+    ? s : defaultSurgePeriodS;
+var surgeDurationS = surgePeriodS * 0.66;        // bump occupies most of the cycle, then rests
+
+GaugeProfile[] profiles =
+[
+    new("CUX", Baseline: 0.80m, Surges: true),   // storm-surge gauge: normal → warning → severe → recede
+    new("HEL", Baseline: 0.50m, Surges: false),  // stays normal throughout, for contrast
+    new("STP", Baseline: 1.00m, Surges: false),  // mild tide, normal
+    new("BHV", Baseline: 0.70m, Surges: false),  // mild tide, normal
+];
 
 // One span per published reading is the trace root. RabbitMQ.Client creates its own
 // publisher activity inside BasicPublishAsync — but only while a listener on
@@ -37,22 +61,24 @@ await using var channel = await connection.CreateChannelAsync();
 await channel.ExchangeDeclareAsync(exchange, ExchangeType.Direct, durable: true);
 
 var rng = new Random();
-var levels = gauges.ToDictionary(g => g, _ => 0.5m);
+var startedAt = DateTimeOffset.UtcNow;
 
 using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
 
-Console.WriteLine($"Simulating {gauges.Length} gauges. Ctrl+C to stop.");
+Console.WriteLine($"Simulating {profiles.Length} gauges (surge peak {surgePeak:0.00} m, "
+    + $"period {surgePeriodS:0}s). Ctrl+C to stop.");
 
 while (!cts.IsCancellationRequested)
 {
-    foreach (var gauge in gauges)
-    {
-        // Random walk around the current level, clamped to a plausible range.
-        var delta = (decimal)(rng.NextDouble() - 0.45) * 0.3m;
-        levels[gauge] = Math.Clamp(levels[gauge] + delta, -2.0m, 5.0m);
+    var now = DateTimeOffset.UtcNow;
+    var t = (now - startedAt).TotalSeconds;
 
-        var reading = new Reading(gauge, decimal.Round(levels[gauge], 3), DateTimeOffset.UtcNow);
+    foreach (var profile in profiles)
+    {
+        var level = LevelAt(profile, t);
+
+        var reading = new Reading(profile.Id, decimal.Round(level, 3), now);
         var body = JsonSerializer.SerializeToUtf8Bytes(reading);
 
         using var activity = simSource.StartActivity("publish reading", ActivityKind.Producer);
@@ -72,3 +98,29 @@ while (!cts.IsCancellationRequested)
 }
 
 Console.WriteLine("Stopped.");
+
+// Composite level for a gauge at elapsed time t (seconds): tide baseline plus, for the
+// surge gauge, a smooth raised-cosine bump, plus tiny noise.
+decimal LevelAt(GaugeProfile profile, double t)
+{
+    var tide = tideAmplitude * (decimal)Math.Sin(2 * Math.PI * t / tidePeriodS);
+    var noise = (decimal)(rng.NextDouble() - 0.5) * 2 * noiseAmplitude;
+    var surge = profile.Surges ? SurgeBump(t, profile.Baseline) : 0m;
+    return profile.Baseline + tide + surge + noise;
+}
+
+// Raised-cosine bump: 0 at the start/end of its window, peaking mid-window. Active for
+// surgeDurationS out of every surgePeriodS, so the gauge rests at baseline between events.
+// Height is chosen so the peak reaches surgePeak above the surge gauge's baseline.
+decimal SurgeBump(double t, decimal baseline)
+{
+    var phase = t % surgePeriodS;
+    if (phase >= surgeDurationS) return 0m;       // resting between surges
+    var height = surgePeak - baseline;
+    var shape = 0.5 * (1 - Math.Cos(2 * Math.PI * phase / surgeDurationS));
+    return height * (decimal)shape;
+}
+
+// A gauge's signal role. Baseline is its calm level (m NHN); Surges marks the one gauge
+// that runs the scripted storm-surge event.
+record GaugeProfile(string Id, decimal Baseline, bool Surges);
