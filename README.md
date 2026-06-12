@@ -65,6 +65,32 @@ Kubernetes/GitOps — on real ground rather than in the abstract.
 
 ---
 
+## Demo
+
+<table>
+<tr>
+<td width="50%"><img src="docs/assets/demo/tidewatch-dashboard-screenshot-1.png" alt="Tidewatch dashboard with every gauge in the normal stage"></td>
+<td width="50%"><img src="docs/assets/demo/tidewatch-dashboard-screenshot-2.png" alt="Tidewatch dashboard during a storm surge, the CUX gauge in the severe stage"></td>
+</tr>
+<tr>
+<td align="center"><sub>Calm — every gauge <code>normal</code>, overall status normal.</sub></td>
+<td align="center"><sub>Surge peak — <code>CUX</code> crosses <code>severe</code> (5.65 m), overall status severe.</sub></td>
+</tr>
+</table>
+
+<p align="center"><sub>▶ <a href="docs/release-notes/v1.1.0.md#demo">Watch the ~60-second surge demo</a> — the full <code>normal → warning → severe → recede</code> cascade.</sub></p>
+
+**What you're seeing.** Each card is a gauge, plotted on a fixed **0–6 m NHN**
+scale. The shaded bands *are* the WADI thresholds: **warning at 4.50 m** and
+**severe at 5.50 m** (2.40 m over mean high water). One gauge — `CUX` — runs a
+scripted storm surge and cascades `normal → warning → severe → recede`; the
+others hold `normal` for contrast. The header summarises gauges per stage, the
+highest current level, and overall status, while the live / last-updated
+indicator makes stale data obvious — turning the threshold story into a single
+glance.
+
+---
+
 ## Architecture
 
 ```
@@ -122,15 +148,23 @@ state is live and in-memory.
 ```jsonc
 {
   "gaugeId": "st-pauli",
-  "level": 4.62,            // metres above NHN, latest reading (null if none yet)
-  "stage": "warning",       // normal | warning | severe
+  "level": 4.62,              // metres above NHN, latest reading (null if none yet)
+  "stage": "warning",         // normal | warning | severe
   "changedAt": "2026-06-12T08:41:00Z",
-  "trend": [                // recent window, downsampled to ≤ 24 points
+  "trend": [                  // recent window, downsampled to ≤ 24 points
     { "t": "2026-06-12T08:30:00Z", "v": 4.41 },
     { "t": "2026-06-12T08:35:00Z", "v": 4.58 }
-  ]
+  ],
+  "rateMetersPerMin": 0.04,   // least-squares rate-of-change over the window (null if < 2 points)
+  "timeInStageSeconds": 180,  // how long the gauge has held its current stage (null if none yet)
+  "windowMin": 4.38,          // window extent — lowest reading (null if empty)
+  "windowMax": 4.71           // window extent — highest reading (null if empty)
 }
 ```
+
+> The derived signals (`rateMetersPerMin`, `timeInStageSeconds`, `windowMin` /
+> `windowMax`) are computed in the API mapper, not held in state — the state
+> holder stays raw (ADR-002).
 
 ---
 
@@ -160,31 +194,35 @@ stays the thing that gets done well:
 - **No auth on the API** — single-tenant showcase; the surface is two read-only
   endpoints.
 - **One domain, one ingestion path** — no multi-network federation, no
-  multi-tenancy, no second data source.
-- **Notifications / alert-event publishing** — `ApplyStageChange` is kept as the
-  single chokepoint so this lands cleanly in v1.1 (M6), not bolted on now.
+  multi-tenancy. A real public gauge feed (PEGELONLINE) is planned alongside the
+  simulator in v1.2 (M7); for the current cut the simulator is the sole source.
+- **Notification delivery** — `ApplyStageChange` now publishes alert events at
+  its single chokepoint (v1.1 / M6), but *acting* on them (email / push, a
+  notification consumer) stays out of scope; the showcase ends at the event.
 
 ---
 
 ## Status
 
-Milestones M1–M5 are complete — **v1.0 is presentable end to end.** M6 (demo &
-polish, v1.1) is post-v1 work in progress. Every intermediate state is built to
-stay coherent — see the roadmap.
+Milestones M1–M6 are complete — **v1.0 is presentable end to end and v1.1 (demo
+& polish) has landed.** M7–M8 (v1.2–v1.3) are planned post-v1.1 work. Every
+intermediate state is built to stay coherent — see the roadmap.
 
 ## Roadmap
 
 Built in milestones, each an intermediate state that stays coherent. The full
 issue-by-issue breakdown lives in **[`docs/ISSUES.md`](docs/ISSUES.md)**.
 
-| Milestone | Focus | Status      |
-|-----------|-------|-------------|
-| **M1 · Foundation** | Repo scaffold, contracts, threshold configuration | Done        |
-| **M2 · Ingestion** | RabbitMQ transport, consumer + dead-letter, per-gauge state, surge evaluator | Done        |
-| **M3 · Observability & Tests** | OpenTelemetry tracing, Testcontainers integration tests | Done        |
-| **M4 · Dashboard** | Angular read-only view — levels, status, trend | Done |
-| **M5 · Deploy** | Kubernetes + Argo CD (GitOps, primary) and Azure Container Apps (IaC + CI) | Done |
-| **M6 · Demo & polish (v1.1)** | Storm-surge scenario, dashboard polish, richer signals, demo assets, alert events | In progress |
+| Milestone                                  | Focus | Status      |
+|--------------------------------------------|-------|-------------|
+| **M1 · Foundation**                        | Repo scaffold, contracts, threshold configuration | Done        |
+| **M2 · Ingestion**                         | RabbitMQ transport, consumer + dead-letter, per-gauge state, surge evaluator | Done        |
+| **M3 · Observability & Tests**             | OpenTelemetry tracing, Testcontainers integration tests | Done        |
+| **M4 · Dashboard**                         | Angular read-only view — levels, status, trend | Done |
+| **M5 · Deploy**                            | Kubernetes + Argo CD (GitOps, primary) and Azure Container Apps (IaC + CI) | Done |
+| **M6 · Demo & polish (v1.1)**              | Storm-surge scenario, dashboard polish, richer signals, demo assets, alert events | Done |
+| **M7 · Real data (v1.2)**                  | Real PEGELONLINE Elbe feed alongside the simulator, source selection, threshold what-if panel | Planned |
+| **M8 · Observability made visible (v1.3)** | Surface the OpenTelemetry path — latency pulse, Jaeger deep-link, optional trace waterfall | Planned |
 
 > **M5 ordering:** Kubernetes + Argo CD is the primary deployment, run on a local
 > cluster to stay at €0; Azure Container Apps ships as IaC + CI, deployed on demand.
