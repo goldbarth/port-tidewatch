@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Options;
 using Tidewatch.Contracts;
+using Tidewatch.Ingestion.Alerting;
 using Tidewatch.Ingestion.Configuration;
 
 namespace Tidewatch.Ingestion.State;
@@ -13,10 +14,16 @@ namespace Tidewatch.Ingestion.State;
 public sealed class GaugeStateHolder
 {
     private readonly TimeSpan _trendWindow;
+    private readonly IAlertPublisher _alerts;
     private readonly ConcurrentDictionary<string, GaugeState> _gauges = new();
 
-    public GaugeStateHolder(IOptions<SurgeThresholdOptions> options) =>
+    private const string NormalStage = "normal";
+
+    public GaugeStateHolder(IOptions<SurgeThresholdOptions> options, IAlertPublisher alerts)
+    {
         _trendWindow = options.Value.TrendWindow;
+        _alerts = alerts;
+    }
 
     /// <summary>
     /// Adds a reading to the gauge's window and discards readings older than the
@@ -64,16 +71,29 @@ public sealed class GaugeStateHolder
     }
 
     /// <summary>
-    /// Isolated point called when the evaluator detects a stage change. For now it
-    /// only updates state; in v1.1.0 this same point also publishes the alert event.
+    /// Isolated point called when the evaluator detects a stage change. Updates the
+    /// gauge's alert state and, on a genuine transition, publishes an
+    /// <see cref="AlertEvent"/> — the single chokepoint where both happen (ADR-001).
+    /// The previous stage is captured and the state mutated under the per-gauge lock;
+    /// publishing happens afterwards, off the lock (no I/O while holding it). The first
+    /// establishment of <c>normal</c> (no prior stage) is not a transition, so no event
+    /// is published — only the state is stamped.
     /// </summary>
-    public void ApplyStageChange(string gaugeId, string newStage, DateTimeOffset at)
+    public async Task ApplyStageChange(
+        string gaugeId, string newStage, decimal level, DateTimeOffset at)
     {
         var state = _gauges.GetOrAdd(gaugeId, _ => new GaugeState());
-        lock (state.Gate)
-            state.Alert = new AlertState(gaugeId, newStage, at);
 
-        // v1.1.0: publish alert event here.
+        string previousStage;
+        lock (state.Gate)
+        {
+            previousStage = state.Alert?.Stage ?? NormalStage;
+            state.Alert = new AlertState(gaugeId, newStage, at);
+        }
+
+        if (!string.Equals(previousStage, newStage, StringComparison.Ordinal))
+            await _alerts.PublishAsync(
+                new AlertEvent(gaugeId, previousStage, newStage, level, at), CancellationToken.None);
     }
 
     private sealed class GaugeState

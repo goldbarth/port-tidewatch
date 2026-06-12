@@ -193,12 +193,12 @@ also publishes an alert event so additional consumers (notification, audit) can
 subscribe.
 
 **Acceptance criteria:**
-- [ ] On a genuine stage change, `ApplyStageChange` publishes an alert event
+- [x] On a genuine stage change, `ApplyStageChange` publishes an alert event
       (gauge, previous → new stage, level, timestamp) to a dedicated exchange.
-- [ ] Publishing is the only addition at that chokepoint; the state-update
+- [x] Publishing is the only addition at that chokepoint; the state-update
       behaviour is unchanged, and no event is published when the stage holds.
-- [ ] The publish is traced consistently with the existing OpenTelemetry path.
-- [ ] Exchange/queue topology is declared in `RabbitMqTransport`; no threshold
+- [x] The publish is traced consistently with the existing OpenTelemetry path.
+- [x] Exchange/queue topology is declared in `RabbitMqTransport`; no threshold
       logic is added to the consumer.
-- [ ] Integration test: one stage transition yields exactly one alert event;
+- [x] Integration test: one stage transition yields exactly one alert event;
       a held stage yields none.
