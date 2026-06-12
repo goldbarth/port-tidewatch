@@ -66,6 +66,9 @@ app.UseCors();
 // hosted service alongside it.
 app.MapGet("/healthz", () => Results.Ok("ok"));
 app.MapGet("/api/gauges", (GaugeStateHolder state) =>
-    state.Snapshot().Select(GaugeMapper.ToDto));
+{
+    var now = DateTimeOffset.UtcNow;
+    return state.Snapshot().Select(s => GaugeMapper.ToDto(s, now));
+});
 
 app.Run();

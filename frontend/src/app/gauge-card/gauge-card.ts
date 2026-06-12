@@ -28,4 +28,35 @@ export class GaugeCard {
       })
       .join(' ');
   });
+
+  // Rate-of-change as a direction class. A small deadband keeps near-flat readings from
+  // flickering between rising/falling; the server already damps the rate (least-squares).
+  private static readonly DEADBAND = 0.01; // m/min
+
+  readonly trendDirection = computed<'rising' | 'falling' | 'steady' | 'none'>(() => {
+    const rate = this.gauge().rateMetersPerMin;
+    if (rate === null) return 'none';
+    if (rate > GaugeCard.DEADBAND) return 'rising';
+    if (rate < -GaugeCard.DEADBAND) return 'falling';
+    return 'steady';
+  });
+
+  readonly trendArrow = computed(() => {
+    switch (this.trendDirection()) {
+      case 'rising':
+        return '▲';
+      case 'falling':
+        return '▼';
+      case 'steady':
+        return '▬';
+      default:
+        return '';
+    }
+  });
+
+  // Magnitude in m/min for the label; sign is carried by the arrow.
+  readonly rateMagnitude = computed(() => {
+    const rate = this.gauge().rateMetersPerMin;
+    return rate === null ? null : Math.abs(rate);
+  });
 }
