@@ -137,13 +137,13 @@ scripted surge event so the alert cascade (normal → warning → severe → rec
 demonstrable. Input only — no contract or architecture change.
 
 **Acceptance criteria:**
-- [ ] At least one gauge crosses 4.50 m (warning) **and** 5.50 m (severe), then
+- [x] At least one gauge crosses 4.50 m (warning) **and** 5.50 m (severe), then
       recedes to normal, within a few minutes.
-- [ ] At least one gauge stays `normal` throughout, for contrast.
-- [ ] The surge cycle is parameterisable (period / peak via const or env), with a
+- [x] At least one gauge stays `normal` throughout, for contrast.
+- [x] The surge cycle is parameterisable (period / peak via const or env), with a
       tide baseline so motion looks plausible, not jagged noise.
-- [ ] The evaluator does not flap during the rise (single-outlier damping holds).
-- [ ] `Reading` contract and the publish path are unchanged; only the simulator
+- [x] The evaluator does not flap during the rise (single-outlier damping holds).
+- [x] `Reading` contract and the publish path are unchanged; only the simulator
       changes.
 
 ### Dashboard visual polish
