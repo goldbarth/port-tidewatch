@@ -153,14 +153,14 @@ Raise the dashboard from functional to presentable (use the `frontend-design`
 skill). Add context and a system overview, refine the visuals.
 
 **Acceptance criteria:**
-- [ ] Sparklines show the warning (4.50) and severe (5.50) reference lines.
-- [ ] A header summary shows the count of gauges per stage and the overall status
+- [x] Sparklines show the warning (4.50) and severe (5.50) reference lines.
+- [x] A header summary shows the count of gauges per stage and the overall status
       / highest current level.
-- [ ] "seit HH:MM:SS" is replaced by relative time in the current stage
+- [x] "seit HH:MM:SS" is replaced by relative time in the current stage
       (e.g. "warning for 3 min").
-- [ ] Refined layout, typography, and spacing; stage colour changes are animated.
-- [ ] A last-updated / connection indicator makes stale data visible.
-- [ ] Still read-only; same-origin relative `/api` behaviour (k8s/dev) preserved.
+- [x] Refined layout, typography, and spacing; stage colour changes are animated.
+- [x] A last-updated / connection indicator makes stale data visible.
+- [x] Still read-only; same-origin relative `/api` behaviour (k8s/dev) preserved.
 
 ### Richer monitoring signals
 **Labels:** ingestion, frontend, demo

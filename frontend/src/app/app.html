@@ -1,4 +1,33 @@
-<h1>Port Tidewatch</h1>
+<header class="masthead">
+  <div class="brand">
+    <h1>Tidewatch</h1>
+    <span class="sub">storm-surge monitor · m über NHN</span>
+  </div>
+  <div class="live" [class]="'conn-' + connection()">
+    <span class="dot" aria-hidden="true"></span>
+    <span class="txt">{{ connectionLabel() }}</span>
+  </div>
+</header>
+
+<section class="summary">
+  <div class="overall">
+    <span class="lbl">status</span>
+    <span class="val">{{ overallStatus() }}</span>
+  </div>
+  <div class="peak">
+    <span class="lbl">highest</span>
+    <span class="val">
+      {{ highestLevel() === null ? '—' : (highestLevel() | number: '1.2-2') }}
+      <small>m NHN</small>
+    </span>
+  </div>
+  <ul class="counts" aria-label="gauges per stage">
+    <li class="c-normal"><b>{{ counts().normal }}</b> normal</li>
+    <li class="c-warning"><b>{{ counts().warning }}</b> warning</li>
+    <li class="c-severe"><b>{{ counts().severe }}</b> severe</li>
+  </ul>
+</section>
+
 <main class="grid">
   @for (g of gauges(); track g.gaugeId) {
     <app-gauge-card [gauge]="g" />

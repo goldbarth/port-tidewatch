@@ -1,117 +1,230 @@
-.card {
-  border: 1px solid #ddd;
-  border-left: 6px solid var(--stage, #999);
-  border-radius: 8px;
-  padding: 1rem;
-  color: var(--stage, #333);
-  background: #fff;
-}
-
+/* Per-card stage tokens: --stage is the on-dark legible tint (line, text, accent),
+   --stage-base the canonical hue (band fills). Both come from the global stage tokens. */
 .stage-normal {
-  --stage: #2e7d32;
+  --stage: var(--stage-normal-fg);
+  --stage-base: var(--stage-normal);
 }
 .stage-warning {
-  --stage: #ed6c02;
+  --stage: var(--stage-warning-fg);
+  --stage-base: var(--stage-warning);
 }
 .stage-severe {
-  --stage: #c62828;
+  --stage: var(--stage-severe-fg);
+  --stage-base: var(--stage-severe);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--stage);
+  border-radius: var(--radius);
+  padding: 0.9rem 1rem 0.75rem;
+  box-shadow: var(--shadow);
+  /* Animate the stage colour change rather than snapping it. */
+  transition:
+    border-left-color 0.6s ease,
+    box-shadow 0.6s ease;
+}
+
+.stage-severe.card {
+  box-shadow:
+    var(--shadow),
+    0 0 0 1px color-mix(in srgb, var(--stage) 40%, transparent),
+    0 0 22px -6px color-mix(in srgb, var(--stage) 60%, transparent);
+  animation: severe-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes severe-pulse {
+  0%,
+  100% {
+    box-shadow:
+      var(--shadow),
+      0 0 0 1px color-mix(in srgb, var(--stage) 30%, transparent),
+      0 0 18px -8px color-mix(in srgb, var(--stage) 50%, transparent);
+  }
+  50% {
+    box-shadow:
+      var(--shadow),
+      0 0 0 1px color-mix(in srgb, var(--stage) 55%, transparent),
+      0 0 28px -4px color-mix(in srgb, var(--stage) 75%, transparent);
+  }
 }
 
 header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.5rem;
 }
 
 h2 {
   margin: 0;
-  font-size: 1.1rem;
-  color: #222;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
+  color: var(--fg);
 }
 
 .badge {
-  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
   text-transform: uppercase;
+  letter-spacing: 0.08em;
   font-weight: 600;
-  padding: 0.15rem 0.5rem;
+  padding: 0.2rem 0.5rem;
   border-radius: 999px;
-  background: var(--stage);
-  color: #fff;
+  color: var(--stage);
+  background: color-mix(in srgb, var(--stage-base) 22%, transparent);
+  border: 1px solid color-mix(in srgb, var(--stage) 35%, transparent);
+  transition:
+    color 0.6s ease,
+    background 0.6s ease,
+    border-color 0.6s ease;
 }
 
 .level {
-  font-size: 1.8rem;
+  margin: 0.55rem 0 0.4rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+}
+
+.level .value {
+  font-family: var(--font-mono);
+  font-feature-settings: 'tnum' 1;
+  font-size: 2rem;
   font-weight: 600;
-  margin: 0.5rem 0;
-  color: #222;
+  line-height: 1;
+  color: var(--fg);
 }
 
 .level small {
-  font-size: 0.8rem;
-  font-weight: 400;
-  color: #777;
+  font-size: 0.72rem;
+  color: var(--fg-faint);
+  letter-spacing: 0.04em;
 }
 
 .trend {
   display: flex;
   align-items: baseline;
-  gap: 0.4rem;
-  margin: 0 0 0.5rem;
-  font-size: 0.9rem;
-  font-variant-numeric: tabular-nums;
-  color: #555;
+  gap: 0.45rem;
+  margin: 0 0 0.55rem;
+  font-family: var(--font-mono);
+  font-feature-settings: 'tnum' 1;
+  font-size: 0.78rem;
+  color: var(--fg-dim);
 }
 
 .trend .arrow {
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   line-height: 1;
 }
 
 .trend .rate {
   font-weight: 600;
-  color: #333;
+  color: var(--fg);
 }
 
 .trend .rate small {
   font-weight: 400;
-  color: #888;
+  color: var(--fg-faint);
 }
 
 .trend .range {
   margin-left: auto;
-  font-size: 0.75rem;
-  color: #999;
+  font-size: 0.68rem;
+  color: var(--fg-faint);
 }
 
-/* Direction colours: rising water is the concerning direction (warm), receding is calm
-   (green), steady is muted. */
+/* Direction colours: rising water is the concerning direction (warm), receding is
+   calm (green), steady is muted. */
 .trend-rising .arrow {
-  color: #c62828;
+  color: var(--stage-severe-fg);
   animation: trend-pulse 1.6s ease-in-out infinite;
 }
 .trend-falling .arrow {
-  color: #2e7d32;
+  color: var(--stage-normal-fg);
 }
 .trend-steady .arrow {
-  color: #999;
+  color: var(--fg-faint);
 }
 
 @keyframes trend-pulse {
-  0%, 100% { opacity: 1; transform: translateY(0); }
-  50% { opacity: 0.55; transform: translateY(-1px); }
+  0%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.55;
+    transform: translateY(-1px);
+  }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .trend-rising .arrow { animation: none; }
-}
-
-.spark {
+.chart {
+  display: block;
   width: 100%;
-  height: 36px;
+  height: auto;
+  margin-top: 0.1rem;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--bg-2);
+}
+
+/* Stage bands: danger zones read progressively stronger. */
+.band {
+  transition: fill 0.6s ease;
+}
+.band-normal {
+  fill: var(--stage-normal);
+  fill-opacity: 0.06;
+}
+.band-warning {
+  fill: var(--stage-warning);
+  fill-opacity: 0.13;
+}
+.band-severe {
+  fill: var(--stage-severe);
+  fill-opacity: 0.18;
+}
+
+.area {
+  fill: color-mix(in srgb, var(--stage) 26%, transparent);
+  transition: fill 0.6s ease;
+}
+
+.line {
+  fill: none;
+  stroke: var(--stage);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  transition: stroke 0.6s ease;
+}
+
+.peak-line {
+  stroke: var(--stage);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+  opacity: 0.45;
+}
+
+.peak-dot {
+  fill: var(--stage);
+  stroke: var(--bg-2);
+  stroke-width: 0.5;
 }
 
 footer {
-  font-size: 0.75rem;
-  color: #777;
-  margin-top: 0.25rem;
+  margin-top: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+  color: var(--stage);
+  opacity: 0.85;
+  text-transform: lowercase;
+  transition: color 0.6s ease;
 }

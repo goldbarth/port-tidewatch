@@ -1,22 +1,181 @@
 :host {
   display: block;
-  max-width: 1100px;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 1.5rem;
-  font-family: system-ui, sans-serif;
+  padding: 1.9rem 1.5rem 3rem;
+  /* Accent wash follows the worst active stage (--accent set by the host status class).
+     Translucent, so the page grain still reads through it. */
+  background-image: radial-gradient(
+    130% 60% at 50% -8%,
+    color-mix(in srgb, var(--accent) 16%, transparent),
+    transparent 58%
+  );
+  transition: background-image 0.8s ease;
 }
 
-h1 {
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
+/* ── Masthead ── */
+.masthead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
 }
 
+.brand h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 2.1rem;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  color: var(--fg);
+}
+
+.brand .sub {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  color: var(--fg-faint);
+}
+
+/* ── Connection / last-updated indicator ── */
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--fg-dim);
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-1) 80%, transparent);
+}
+
+.live .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--fg-faint);
+  flex: none;
+}
+
+.conn-live .dot {
+  background: var(--stage-normal-fg);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--stage-normal-fg) 70%, transparent);
+  animation: ping 2s ease-out infinite;
+}
+.conn-stale {
+  color: var(--stage-warning-fg);
+}
+.conn-stale .dot {
+  background: var(--stage-warning-fg);
+}
+.conn-offline .dot {
+  background: var(--fg-faint);
+}
+
+@keyframes ping {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--stage-normal-fg) 60%, transparent);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 7px transparent;
+  }
+}
+
+/* ── Summary bar ── */
+.summary {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  padding: 0.85rem 1.1rem;
+  margin-bottom: 1.5rem;
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.summary .lbl {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--fg-faint);
+  margin-bottom: 0.15rem;
+}
+
+.summary .val {
+  font-family: var(--font-mono);
+  font-feature-settings: 'tnum' 1;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.overall .val {
+  color: var(--accent);
+  text-transform: lowercase;
+  transition: color 0.6s ease;
+}
+
+.peak .val small {
+  font-size: 0.68rem;
+  font-weight: 400;
+  color: var(--fg-faint);
+}
+
+.counts {
+  display: flex;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  margin-left: auto;
+  padding: 0;
+}
+
+.counts li {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  padding: 0.3rem 0.6rem 0.3rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  color: var(--fg-dim);
+  background: var(--bg-2);
+}
+
+.counts b {
+  font-size: 0.95rem;
+  margin-right: 0.3rem;
+}
+
+.counts .c-normal b {
+  color: var(--stage-normal-fg);
+}
+.counts .c-warning b {
+  color: var(--stage-warning-fg);
+}
+.counts .c-severe b {
+  color: var(--stage-severe-fg);
+}
+
+/* ── Grid ── */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.1rem;
 }
 
 .waiting {
-  color: #777;
+  font-family: var(--font-mono);
+  color: var(--fg-faint);
 }

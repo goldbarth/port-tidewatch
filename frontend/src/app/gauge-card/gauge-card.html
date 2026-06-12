@@ -3,7 +3,12 @@
     <h2>{{ gauge().gaugeId }}</h2>
     <span class="badge">{{ gauge().stage }}</span>
   </header>
-  <p class="level">{{ gauge().level | number: '1.2-2' }} <small>m NHN</small></p>
+
+  <p class="level">
+    <span class="value">{{ gauge().level | number: '1.2-2' }}</span>
+    <small>m NHN</small>
+  </p>
+
   @if (rateMagnitude() !== null) {
     <p class="trend" [class]="'trend-' + trendDirection()">
       <span class="arrow" aria-hidden="true">{{ trendArrow() }}</span>
@@ -15,10 +20,30 @@
       }
     </p>
   }
-  <svg class="spark" viewBox="0 0 100 30" preserveAspectRatio="none">
-    <polyline [attr.points]="sparkline()" fill="none" stroke="currentColor" stroke-width="1" />
+
+  <svg
+    class="chart"
+    [attr.viewBox]="'0 0 ' + vbWidth + ' ' + vbHeight"
+    role="img"
+    [attr.aria-label]="'Level trend for ' + gauge().gaugeId"
+  >
+    <!-- Stage bands: their edges are the 4.50 / 5.50 thresholds -->
+    @for (b of bands; track b.stage) {
+      <rect class="band" [class]="'band-' + b.stage" x="0" [attr.y]="b.y" [attr.width]="vbWidth" [attr.height]="b.h" />
+    }
+
+    <!-- Level history: filled area + crisp top line -->
+    @if (areaPath()) {
+      <path class="area" [attr.d]="areaPath()" />
+      <path class="line" [attr.d]="linePath()" vector-effect="non-scaling-stroke" />
+    }
+
+    <!-- Peak marker: window maximum, with a faint level line to read closeness to the next band -->
+    @if (peak(); as p) {
+      <line class="peak-line" x1="0" [attr.y1]="p.y" [attr.x2]="vbWidth" [attr.y2]="p.y" vector-effect="non-scaling-stroke" />
+      <circle class="peak-dot" [attr.cx]="p.x" [attr.cy]="p.y" r="1.6" />
+    }
   </svg>
-  @if (gauge().changedAt) {
-    <footer>seit {{ gauge().changedAt | date: 'HH:mm:ss' }}</footer>
-  }
+
+  <footer [class]="'stage-' + gauge().stage">{{ stageDuration() }}</footer>
 </article>
