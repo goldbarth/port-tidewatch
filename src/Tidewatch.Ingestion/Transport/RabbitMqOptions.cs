@@ -28,4 +28,14 @@ public sealed class RabbitMqOptions
 
     /// <summary>Dead-letter queue holding rejected messages.</summary>
     public string DeadLetterQueue { get; set; } = "tidewatch.ingestion.dead";
+
+    /// <summary>
+    /// Fanout exchange alert events are published to on a genuine stage change. Fanout so
+    /// independent consumers (notification, audit) can subscribe without coordinating
+    /// routing keys (ADR-001, v1.1.0).
+    /// </summary>
+    public string AlertExchange { get; set; } = "tidewatch.alerts";
+
+    /// <summary>Durable queue bound to the alert exchange — a persistent audit record.</summary>
+    public string AlertAuditQueue { get; set; } = "tidewatch.alerts.audit";
 }

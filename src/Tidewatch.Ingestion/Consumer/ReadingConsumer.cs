@@ -104,7 +104,8 @@ public sealed class ReadingConsumer : BackgroundService
         if (!string.Equals(newStage, currentStage, StringComparison.Ordinal))
         {
             activity?.AddEvent(new ActivityEvent("stage changed"));
-            _state.ApplyStageChange(reading.GaugeId, newStage, reading.Timestamp);
+            await _state.ApplyStageChange(
+                reading.GaugeId, newStage, reading.Value, reading.Timestamp);
         }
 
         await channel.BasicAckAsync(ea.DeliveryTag, multiple: false, cancellationToken);

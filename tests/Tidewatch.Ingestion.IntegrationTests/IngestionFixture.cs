@@ -1,10 +1,13 @@
+using System.Collections.Concurrent;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 using Testcontainers.RabbitMq;
 using Tidewatch.Contracts;
+using Tidewatch.Ingestion.Alerting;
 using Tidewatch.Ingestion.Configuration;
 using Tidewatch.Ingestion.Consumer;
 using Tidewatch.Ingestion.Evaluation;
@@ -24,6 +27,7 @@ public sealed class IngestionFixture : IAsyncLifetime
     private const string Exchange = "tidewatch.readings";
     private const string RoutingKey = "reading";
     private const string Queue = "tidewatch.ingestion";
+    private const string AlertExchange = "tidewatch.alerts";
 
     private readonly RabbitMqContainer _broker = new RabbitMqBuilder("rabbitmq:3-management")
         .WithUsername("guest")
@@ -33,6 +37,8 @@ public sealed class IngestionFixture : IAsyncLifetime
     private IHost _host = null!;
     private IConnection _publisherConnection = null!;
     private IChannel _publisherChannel = null!;
+    private IChannel _alertChannel = null!;
+    private readonly ConcurrentQueue<AlertEvent> _alerts = new();
 
     /// <summary>The live state holder resolved from the hosted pipeline.</summary>
     public GaugeStateHolder State => _host.Services.GetRequiredService<GaugeStateHolder>();
@@ -68,6 +74,7 @@ public sealed class IngestionFixture : IAsyncLifetime
             .AddOptions<RabbitMqOptions>()
             .Bind(builder.Configuration.GetSection(RabbitMqOptions.SectionName));
         builder.Services.AddSingleton<RabbitMqTransport>();
+        builder.Services.AddSingleton<IAlertPublisher, RabbitMqAlertPublisher>();
         builder.Services.AddSingleton<GaugeStateHolder>();
         builder.Services.AddSingleton<ISurgeEvaluator, SurgeEvaluator>();
         builder.Services.AddHostedService<ReadingConsumer>();
@@ -86,6 +93,31 @@ public sealed class IngestionFixture : IAsyncLifetime
         _publisherChannel = await _publisherConnection.CreateChannelAsync();
 
         await WaitForConsumerTopologyAsync();
+        await SubscribeToAlertsAsync();
+    }
+
+    /// <summary>
+    /// Binds a private exclusive queue to the fanout alert exchange and collects every
+    /// published <see cref="AlertEvent"/>. The exchange is declared defensively (idempotent,
+    /// matching the service) so the subscription does not race the consumer's declaration.
+    /// </summary>
+    private async Task SubscribeToAlertsAsync()
+    {
+        _alertChannel = await _publisherConnection.CreateChannelAsync();
+        await _alertChannel.ExchangeDeclareAsync(AlertExchange, ExchangeType.Fanout, durable: true);
+        var queue = await _alertChannel.QueueDeclareAsync(
+            queue: string.Empty, durable: false, exclusive: true, autoDelete: true);
+        await _alertChannel.QueueBindAsync(queue.QueueName, AlertExchange, routingKey: string.Empty);
+
+        var consumer = new AsyncEventingBasicConsumer(_alertChannel);
+        consumer.ReceivedAsync += (_, ea) =>
+        {
+            var evt = JsonSerializer.Deserialize<AlertEvent>(ea.Body.Span);
+            if (evt is not null)
+                _alerts.Enqueue(evt);
+            return Task.CompletedTask;
+        };
+        await _alertChannel.BasicConsumeAsync(queue.QueueName, autoAck: true, consumer);
     }
 
     /// <summary>Publishes a reading to the ingestion exchange.</summary>
@@ -95,6 +127,29 @@ public sealed class IngestionFixture : IAsyncLifetime
         await _publisherChannel.BasicPublishAsync(
             Exchange, RoutingKey, mandatory: false,
             new BasicProperties { Persistent = true }, body);
+    }
+
+    /// <summary>Alert events received so far for a gauge, in arrival order.</summary>
+    public IReadOnlyList<AlertEvent> AlertsFor(string gaugeId) =>
+        _alerts.Where(a => a.GaugeId == gaugeId).ToArray();
+
+    /// <summary>
+    /// Polls until at least <paramref name="count"/> alert events have arrived for the
+    /// gauge or the timeout elapses. Returns whatever has arrived (so an assertion can
+    /// show the actual count).
+    /// </summary>
+    public async Task<IReadOnlyList<AlertEvent>> WaitForAlertsAsync(
+        string gaugeId, int count, TimeSpan timeout)
+    {
+        var deadline = DateTime.UtcNow + timeout;
+        while (DateTime.UtcNow < deadline)
+        {
+            var matching = AlertsFor(gaugeId);
+            if (matching.Count >= count)
+                return matching;
+            await Task.Delay(100);
+        }
+        return AlertsFor(gaugeId);
     }
 
     /// <summary>
@@ -143,6 +198,8 @@ public sealed class IngestionFixture : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
+        if (_alertChannel is not null)
+            await _alertChannel.DisposeAsync();
         if (_publisherChannel is not null)
             await _publisherChannel.DisposeAsync();
         if (_publisherConnection is not null)

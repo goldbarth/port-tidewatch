@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using RabbitMQ.Client;
+using Tidewatch.Ingestion.Alerting;
 using Tidewatch.Ingestion.Api;
 using Tidewatch.Ingestion.Configuration;
 using Tidewatch.Ingestion.Consumer;
@@ -29,6 +30,7 @@ builder.Services
 
 // Transport infrastructure and live state are singletons.
 builder.Services.AddSingleton<RabbitMqTransport>();
+builder.Services.AddSingleton<IAlertPublisher, RabbitMqAlertPublisher>();
 builder.Services.AddSingleton<GaugeStateHolder>();
 
 // Evaluator (internals are the next focused session).
@@ -56,6 +58,7 @@ builder.Services.AddOpenTelemetry()
     .WithTracing(tracing => tracing
         .AddSource(IngestionTelemetry.SourceName)
         .AddSource(RabbitMQActivitySource.SubscriberSourceName)
+        .AddSource(RabbitMQActivitySource.PublisherSourceName)
         .AddOtlpExporter());
 
 var app = builder.Build();
