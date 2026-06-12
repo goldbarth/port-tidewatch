@@ -168,12 +168,11 @@ skill). Add context and a system overview, refine the visuals.
 More to watch per gauge than the level alone.
 
 **Acceptance criteria:**
-- [ ] API DTO gains per-gauge rate-of-change (m/min over the window) and
+- [x] API DTO gains per-gauge rate-of-change (m/min over the window) and
       time-in-current-stage; optionally window min/max.
-- [ ] New fields are computed in the API mapper; the state holder stays raw
-      (per ADR-002).
-- [ ] The dashboard surfaces them (e.g. a ▲/▼ trend arrow with the rate).
-- [ ] Unit/integration coverage for the computed fields.
+- [x] New fields are computed in the API mapper; the state holder stays raw (per ADR-002).
+- [x] The dashboard surfaces them (e.g. a ▲/▼ trend arrow with the rate).
+- [x] Unit/integration coverage for the computed fields.
 
 ### Demo assets
 **Labels:** docs, demo

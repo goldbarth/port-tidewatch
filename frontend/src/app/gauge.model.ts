@@ -9,4 +9,8 @@ export interface Gauge {
   stage: 'normal' | 'warning' | 'severe';
   changedAt: string | null;
   trend: TrendPoint[];
+  rateMetersPerMin: number | null;
+  timeInStageSeconds: number | null;
+  windowMin: number | null;
+  windowMax: number | null;
 }

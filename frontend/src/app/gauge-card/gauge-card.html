@@ -4,6 +4,17 @@
     <span class="badge">{{ gauge().stage }}</span>
   </header>
   <p class="level">{{ gauge().level | number: '1.2-2' }} <small>m NHN</small></p>
+  @if (rateMagnitude() !== null) {
+    <p class="trend" [class]="'trend-' + trendDirection()">
+      <span class="arrow" aria-hidden="true">{{ trendArrow() }}</span>
+      <span class="rate">{{ rateMagnitude() | number: '1.2-2' }} <small>m/min</small></span>
+      @if (gauge().windowMin !== null && gauge().windowMax !== null) {
+        <span class="range">
+          {{ gauge().windowMin | number: '1.2-2' }}–{{ gauge().windowMax | number: '1.2-2' }} m
+        </span>
+      }
+    </p>
+  }
   <svg class="spark" viewBox="0 0 100 30" preserveAspectRatio="none">
     <polyline [attr.points]="sparkline()" fill="none" stroke="currentColor" stroke-width="1" />
   </svg>

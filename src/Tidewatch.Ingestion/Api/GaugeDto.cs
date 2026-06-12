@@ -9,32 +9,76 @@ public sealed record GaugeDto(
     decimal? Level,
     string Stage,
     DateTimeOffset? ChangedAt,
-    IReadOnlyList<TrendPointDto> Trend);
+    IReadOnlyList<TrendPointDto> Trend,
+    decimal? RateMetersPerMin,
+    long? TimeInStageSeconds,
+    decimal? WindowMin,
+    decimal? WindowMax);
 
 /// <summary>A single point on a gauge's recent-history trend.</summary>
 public sealed record TrendPointDto(DateTimeOffset T, decimal V);
 
 /// <summary>
-/// Maps the raw <see cref="GaugeSnapshot"/> to the dashboard DTO. The trend is
-/// downsampled to a fixed number of buckets here — a view concern kept out of the
-/// state holder. The window is assumed chronological (insert order under the
-/// consumer's single-dispatch processing), so no re-sorting is done.
+/// Maps the raw <see cref="GaugeSnapshot"/> to the dashboard DTO. Derived monitoring
+/// signals (rate-of-change, time-in-stage, window extent) and the downsampled trend are
+/// computed here — view concerns kept out of the state holder (ADR-002). The window is
+/// assumed chronological (insert order under the consumer's single-dispatch processing),
+/// so no re-sorting is done.
 /// </summary>
 public static class GaugeMapper
 {
     private const int TrendBuckets = 24;
     private const string NormalStage = "normal";
 
-    public static GaugeDto ToDto(GaugeSnapshot snapshot)
+    public static GaugeDto ToDto(GaugeSnapshot snapshot, DateTimeOffset now)
     {
         var window = snapshot.Window;
         var level = window.Count > 0 ? window[^1].Value : (decimal?)null;
+        var timeInStage = snapshot.Alert is { } alert
+            ? (long)Math.Max(0, (now - alert.ChangedAt).TotalSeconds)
+            : (long?)null;
         return new GaugeDto(
             snapshot.GaugeId,
             level,
             snapshot.Alert?.Stage ?? NormalStage,
             snapshot.Alert?.ChangedAt,
-            Downsample(window));
+            Downsample(window),
+            RatePerMinute(window),
+            timeInStage,
+            window.Count > 0 ? window.Min(r => r.Value) : null,
+            window.Count > 0 ? window.Max(r => r.Value) : null);
+    }
+
+    /// <summary>
+    /// Rate-of-change in m/min as the least-squares slope of the window (value against
+    /// minutes from the first reading). A fitted slope, not an endpoint difference, so a
+    /// single outlier does not swing the trend — consistent with the evaluator's
+    /// robustness (ADR-004). Null when fewer than two readings span any time.
+    /// </summary>
+    private static decimal? RatePerMinute(IReadOnlyList<Reading> window)
+    {
+        if (window.Count < 2)
+            return null;
+
+        var t0 = window[0].Timestamp;
+        double sumX = 0, sumY = 0, sumXy = 0, sumXx = 0;
+        foreach (var r in window)
+        {
+            var x = (r.Timestamp - t0).TotalMinutes;
+            var y = (double)r.Value;
+            sumX += x;
+            sumY += y;
+            sumXy += x * y;
+            sumXx += x * x;
+        }
+
+        var n = window.Count;
+        var denominator = n * sumXx - sumX * sumX;
+        if (denominator == 0)              // all readings share one timestamp
+            return null;
+
+        var slope = (n * sumXy - sumX * sumY) / denominator;
+        return decimal.Round((decimal)slope, 3);
     }
 
     /// <summary>
