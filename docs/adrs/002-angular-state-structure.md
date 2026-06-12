@@ -96,3 +96,27 @@ is revisited only if the dashboard is later served from a different origin
   augmenting polling with server push off the `ApplyStageChange` chokepoint.
 - When the dashboard is served from a different origin than the API (deploy
   phase), add the CORS policy then rather than now.
+
+---
+
+## Addendum (M6 / #27): hold the last snapshot across a failed poll
+
+**Status:** Accepted, 2026-06-12
+
+The original decision had the client fall back to an empty list when a poll
+failed. In practice a single transient error (an API restart, a momentary
+network blip) then blanks the whole dashboard to "waiting for data", which is
+both alarming and wrong — the data is merely a few seconds stale, not gone.
+
+The dashboard polled state is therefore widened from a bare gauge list to a
+small `GaugesState { gauges, lastUpdated, connected }`. On a failed poll the
+client keeps the last successful `gauges` and flips `connected` to false;
+`lastUpdated` records the last success. A connection / last-updated indicator
+renders this so stale data is visible rather than hidden.
+
+This is a deliberate, bounded refinement of "minimal client state", not a
+reversal: the client still holds exactly **one** snapshot (the most recent
+successful response) plus two scalars — no history, no store, no client-side
+derivation of stage or trend. It remains read-only and polling-based. The
+single held snapshot is what makes staleness observable; without it the client
+cannot distinguish "fresh and empty" from "stale after an error".
