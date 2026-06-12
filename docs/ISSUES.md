@@ -11,6 +11,8 @@ Milestones:
 - **M4 – Dashboard**: Angular read-only view
 - **M5 – Deploy**: Container Apps baseline, then Kubernetes + Argo CD
 - **M6 – Demo & polish (v1.1)**: storyful data, dashboard polish, richer signals, alert events
+- **M7 – Echte Daten (v1.2)**: real PEGELONLINE Elbe feed alongside the simulator, source selection, threshold what-if panel
+- **M8 – Observability sichtbar (v1.3)**: surface the OpenTelemetry path in the dashboard — latency pulse, Jaeger deep-link, optional trace waterfall
 
 ---
 
@@ -180,10 +182,10 @@ More to watch per gauge than the level alone.
 Capture the showcase so it survives beyond a live run.
 
 **Acceptance criteria:**
-- [ ] A short (≤ 90 s) screen recording of the surge scenario showing the stage
+- [x] A short (≤ 90 s) screen recording of the surge scenario showing the stage
       cascade across gauges.
-- [ ] README updated with a dashboard screenshot (and/or a clip/GIF).
-- [ ] A brief "what you're seeing" caption tying it to the WADI threshold story.
+- [x] README updated with a dashboard screenshot (and/or a clip/GIF).
+- [x] A brief "what you're seeing" caption tying it to the WADI threshold story.
 
 ### Alert-event publishing (deferred from v1.0)
 **Labels:** ingestion, v1.1
@@ -202,3 +204,128 @@ subscribe.
       logic is added to the consumer.
 - [x] Integration test: one stage transition yields exactly one alert event;
       a held stage yields none.
+
+---
+
+## M7 – Real data (v1.2)
+
+Post-v1.1 work. Replace the simulator as the sole source with a real public
+gauge feed (PEGELONLINE / WSV), without touching the `Reading` contract or the
+consumer path. The simulator stays available for the scripted surge demo; the
+real feed runs alongside it. Like the M6 items, each has explicit acceptance
+criteria.
+
+> **Domain note:** PEGELONLINE publishes `W` values in centimetres relative to
+> the gauge zero (Pegelnullpunkt, PNP), not in metres NHN. The adapter must
+> convert cm → m and add the per-station PNP offset (`gaugeZero.value`, m above
+> NHN) to land on true NHN metres. License is Datenlizenz Deutschland Zero 2.0
+> (free, attribution-free); no auth required.
+
+### PEGELONLINE source adapter
+**Labels:** ingestion, integration
+**Milestone:** M7
+A source adapter that polls the PEGELONLINE REST-API
+(`/stations/{uuid}/W/currentmeasurement.json` for the latest value,
+`/stations/{uuid}/W/measurements.json?start=...` to backfill the window) and
+emits the same `Reading` records the simulator does. Station UUIDs are
+configuration. Honour the API's `ETag` / `Cache-Control` for conditional polling.
+
+**Acceptance criteria:**
+- [ ] Configured Hamburg Elbe gauges (e.g. St. Pauli, Bunthaus, Over,
+  Zollenspieker) by UUID in appsettings, not hard-coded.
+- [ ] cm → m conversion and PNP → NHN offset applied in an explicit mapping
+  layer; a unit test pins a known value end to end.
+- [ ] Conditional GET via `If-None-Match`; a `304` does not emit a duplicate
+  reading.
+- [ ] Transient API failure (timeout, 5xx) is logged and retried; the path does
+  not crash the ingestion service.
+- [ ] `Reading` contract, evaluator, and consumer path are unchanged; only a new
+  source feeds them.
+
+### Source selection: simulator vs. live feed
+**Labels:** ingestion, config
+**Milestone:** M7
+Make the active reading source selectable so the same build can run the scripted
+surge (demo) or the real Elbe feed (production-near), without recompiling.
+
+**Acceptance criteria:**
+- [ ] A single config switch (`ReadingSource: Simulator | Pegelonline`) selects
+  the active source at startup.
+- [ ] A bad/empty source configuration fails at startup, consistent with the
+  threshold-options validation pattern.
+- [ ] Both sources produce identical `Reading` shapes; downstream cannot tell
+  them apart.
+- [ ] README documents how to switch and which gauges the live feed covers.
+
+### Threshold "what-if" panel
+**Labels:** frontend, demo
+**Milestone:** M7
+A read-only dashboard panel that lets the viewer drag the warning/severe
+thresholds and see the current windows re-classified live, illustrating the
+"thresholds are configuration, not code" decision against real data.
+
+**Acceptance criteria:**
+- [ ] Dragging a threshold re-derives the displayed stage per gauge client-side;
+  no API write, no server state change.
+- [ ] A "reset to configured thresholds" control restores the appsettings
+  values.
+- [ ] The panel is clearly marked as a local exploration, not a system setting.
+- [ ] Same-origin relative `/api` behaviour and read-only posture preserved.
+
+---
+
+## M8 – Observability made visible (v1.3)
+
+Post-v1.2 work. Surface the OpenTelemetry path that already runs (M3) in the
+dashboard, so the pipeline's health is visible, not just wired. Best built after
+M7 so the latency signal reflects real ingest. Each item has explicit acceptance
+criteria.
+
+### Pipeline latency pulse
+**Labels:** observability, frontend
+**Milestone:** M8
+Expose per-gauge processing latency (receipt → evaluation → state change) from
+the existing spans and show it in the dashboard as a small latency sparkline
+plus a healthy / degraded indicator. Cheap, domain-honest: a stalled surge
+pipeline is a real risk.
+
+**Acceptance criteria:**
+- [ ] API exposes a processing-latency figure (last value or p50/p95 over a
+  short window) derived from the existing trace path, not a new measurement
+  source.
+- [ ] The dashboard shows the latency trend and a healthy / degraded state with
+  a clear threshold.
+- [ ] No change to the evaluator or `Reading` contract; the figure is computed
+  from telemetry already collected.
+- [ ] Stale telemetry surfaces as "degraded / no recent data", consistent with
+  the connection indicator from #27.
+
+### Jaeger deep-link from the dashboard
+**Labels:** observability, frontend
+**Milestone:** M8
+From a gauge (or the latency pulse), link to the corresponding trace view in
+Jaeger so a viewer can drill from "this looks slow" to the actual spans.
+
+**Acceptance criteria:**
+- [ ] A per-gauge (or per-event) link opens the relevant Jaeger trace/search.
+- [ ] The Jaeger base URL is configuration (differs k8s vs. local), not
+  hard-coded.
+- [ ] The link degrades gracefully when Jaeger is not reachable (e.g. Container
+  Apps deploy without it).
+
+### Self-rendered trace waterfall (optional)
+**Labels:** observability, frontend, stretch
+**Milestone:** M8
+A stretch item that renders a single reading's spans as an in-dashboard
+waterfall (Gantt-style bars with offsets) from the Jaeger query API, to make the
+OpenTelemetry instrumentation legible without leaving the app. Clearly an
+"under the hood" tab, kept distinct from the domain view.
+
+**Acceptance criteria:**
+- [ ] One trace is fetched via the Jaeger query API and its spans drawn as
+  time-offset bars on the existing SVG approach.
+- [ ] The view is a clearly separated "under the hood" tab, not mixed into the
+  gauge dashboard.
+- [ ] Explicitly optional: the milestone is complete without it; it ships only
+  if time allows.
+
