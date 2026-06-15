@@ -1,0 +1,78 @@
+<section class="whatif" aria-labelledby="whatif-title">
+  <header class="whatif-head">
+    <div class="title">
+      <h2 id="whatif-title">Threshold what-if</h2>
+      <span class="tag">local exploration</span>
+    </div>
+    <p class="note">
+      Drag the boundaries to reclassify the live readings in your browser. Nothing is sent
+      back — the service keeps its configured thresholds. Stages here use a plain
+      level-vs-boundary rule, not the server's smoothed evaluator.
+    </p>
+  </header>
+
+  <div class="controls">
+    <div class="slider stage-warning">
+      <label for="wf-warning">
+        <span class="k">warning ≥</span>
+        <span class="v">{{ warning() | number: '1.2-2' }} <small>m NHN</small></span>
+      </label>
+      <input
+        id="wf-warning"
+        type="range"
+        [min]="domainMin"
+        [max]="domainMax"
+        [step]="step"
+        [value]="warning()"
+        (input)="onWarning($any($event.target).valueAsNumber)"
+      />
+    </div>
+
+    <div class="slider stage-severe">
+      <label for="wf-severe">
+        <span class="k">severe ≥</span>
+        <span class="v">{{ severe() | number: '1.2-2' }} <small>m NHN</small></span>
+      </label>
+      <input
+        id="wf-severe"
+        type="range"
+        [min]="domainMin"
+        [max]="domainMax"
+        [step]="step"
+        [value]="severe()"
+        (input)="onSevere($any($event.target).valueAsNumber)"
+      />
+    </div>
+
+    <div class="actions">
+      <span class="diff" [class.on]="differingCount() > 0">
+        {{ differingCount() }} reclassified
+      </span>
+      <button type="button" (click)="reset()" [disabled]="!modified()">
+        reset to configured
+      </button>
+    </div>
+  </div>
+
+  <ul class="rows" aria-label="what-if classification per gauge">
+    @for (r of rows(); track r.id) {
+      <li class="row" [class.differs]="r.differs">
+        <span class="id">{{ r.id }}</span>
+        <span class="lvl">
+          {{ r.level === null ? '—' : (r.level | number: '1.2-2') }}
+          <small>m</small>
+        </span>
+        @if (r.whatIf) {
+          <span class="chip" [class]="'stage-' + r.whatIf">{{ r.whatIf }}</span>
+        } @else {
+          <span class="chip empty">no data</span>
+        }
+        @if (r.differs) {
+          <span class="was">live: {{ r.live }}</span>
+        }
+      </li>
+    } @empty {
+      <li class="waiting">Warte auf Daten…</li>
+    }
+  </ul>
+</section>
