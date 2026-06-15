@@ -262,9 +262,32 @@ dotnet restore port-tidewatch.slnx
 # Run the ingestion service (needs a reachable RabbitMQ — see appsettings RabbitMq section)
 dotnet run --project src/Tidewatch.Ingestion
 
-# Run the simulator (publishes Reading messages; RABBITMQ_HOST env var overrides host)
+# Run the reading-source host (publishes Reading messages; RABBITMQ_HOST env var overrides host).
+# Defaults to the scripted simulator; switch to the live Elbe feed with ReadingSource=Pegelonline.
 dotnet run --project src/Tidewatch.Source
+ReadingSource=Pegelonline dotnet run --project src/Tidewatch.Source
 ```
+
+### Reading source: simulator vs. live feed
+
+`Tidewatch.Source` runs exactly one reading source, chosen at startup by the
+`ReadingSource` config switch (appsettings key or env var) — the same build serves
+the scripted demo or the real feed without recompiling:
+
+| `ReadingSource` | Source | Notes |
+|-----------------|--------|-------|
+| `Simulator` (default) | Scripted surge | One gauge runs warning → severe → recede; the rest stay normal. |
+| `Pegelonline` | Live WSV/PEGELONLINE Elbe feed | Polls the configured Hamburg Elbe gauges; cm → m and PNP → NHN applied in an explicit mapping layer. |
+
+A missing or unrecognised `ReadingSource` fails at startup (same fail-fast posture
+as the threshold config). Both sources emit the identical `Reading` shape, so the
+ingestion path cannot tell them apart.
+
+The live feed covers four Hamburg Elbe gauges, configured by UUID under the
+`Pegelonline` section: **St. Pauli**, **Bunthaus**, **Over**, **Zollenspieker**.
+PEGELONLINE data is Datenlizenz Deutschland Zero 2.0 (free, no auth). HPA tidal
+gauges expose no `gaugeZero`, so their PNP is set explicitly (Hamburg PNP =
+NHN −5.00 m).
 
 ---
 
