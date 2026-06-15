@@ -263,7 +263,7 @@ dotnet restore port-tidewatch.slnx
 dotnet run --project src/Tidewatch.Ingestion
 
 # Run the simulator (publishes Reading messages; RABBITMQ_HOST env var overrides host)
-dotnet run --project src/Tidewatch.Simulator
+dotnet run --project src/Tidewatch.Source
 ```
 
 ---

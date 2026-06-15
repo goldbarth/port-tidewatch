@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
-    "Tidewatch.Simulator": {
+    "Tidewatch.Source": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "environmentVariables": {

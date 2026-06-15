@@ -2,10 +2,11 @@
   <Folder Name="/src/">
     <Project Path="src/Tidewatch.Contracts/Tidewatch.Contracts.csproj" />
     <Project Path="src/Tidewatch.Ingestion/Tidewatch.Ingestion.csproj" />
-    <Project Path="src/Tidewatch.Simulator/Tidewatch.Simulator.csproj" />
+    <Project Path="src/Tidewatch.Source/Tidewatch.Source.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Tidewatch.Ingestion.IntegrationTests/Tidewatch.Ingestion.IntegrationTests.csproj" />
     <Project Path="tests/Tidewatch.Ingestion.UnitTests/Tidewatch.Ingestion.UnitTests.csproj" />
+    <Project Path="tests/Tidewatch.Source.UnitTests/Tidewatch.Source.UnitTests.csproj" />
   </Folder>
 </Solution>

@@ -41,11 +41,11 @@ them before syncing**, or pods fail with `ImagePullBackOff`.
 
 ```bash
 docker build -f src/Tidewatch.Ingestion/Dockerfile -t tidewatch-ingestion:dev .
-docker build -f src/Tidewatch.Simulator/Dockerfile  -t tidewatch-simulator:dev  .
+docker build -f src/Tidewatch.Source/Dockerfile  -t tidewatch-source:dev  .
 docker build -f frontend/Dockerfile                  -t tidewatch-dashboard:dev frontend
 
 kind load docker-image --name tidewatch \
-  tidewatch-ingestion:dev tidewatch-simulator:dev tidewatch-dashboard:dev
+  tidewatch-ingestion:dev tidewatch-source:dev tidewatch-dashboard:dev
 ```
 
 > Re-loading after a rebuild: `kind load` again, then restart the workload —

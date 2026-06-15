@@ -63,7 +63,7 @@ Wait for `Now listening on: http://localhost:5080`. Leave it running.
 In a second terminal:
 
 ```bash
-dotnet run --project src/Tidewatch.Simulator
+dotnet run --project src/Tidewatch.Source
 ```
 
 It publishes readings for four gauges (CUX, HEL, STP, BHV) every ~2 s and prints
