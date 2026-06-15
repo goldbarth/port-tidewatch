@@ -1,7 +1,7 @@
 <header class="masthead">
   <div class="brand">
     <h1>Tidewatch</h1>
-    <span class="sub">storm-surge monitor · m über NHN</span>
+    <span class="sub">Sturmflut-Überwachung · m über NHN</span>
   </div>
   <div class="live" [class]="'conn-' + connection()">
     <span class="dot" aria-hidden="true"></span>
@@ -11,20 +11,20 @@
 
 <section class="summary">
   <div class="overall">
-    <span class="lbl">status</span>
-    <span class="val">{{ overallStatus() }}</span>
+    <span class="lbl">Status</span>
+    <span class="val">{{ overallStatusLabel() }}</span>
   </div>
   <div class="peak">
-    <span class="lbl">highest</span>
+    <span class="lbl">Höchststand</span>
     <span class="val">
       {{ highestLevel() === null ? '—' : (highestLevel() | number: '1.2-2') }}
       <small>m NHN</small>
     </span>
   </div>
-  <ul class="counts" aria-label="gauges per stage">
-    <li class="c-normal"><b>{{ counts().normal }}</b> normal</li>
-    <li class="c-warning"><b>{{ counts().warning }}</b> warning</li>
-    <li class="c-severe"><b>{{ counts().severe }}</b> severe</li>
+  <ul class="counts" aria-label="Pegel je Stufe">
+    <li class="c-normal"><b>{{ counts().normal }}</b> Normal</li>
+    <li class="c-warning"><b>{{ counts().warning }}</b> Warnung</li>
+    <li class="c-severe"><b>{{ counts().severe }}</b> Schwere Sturmflut</li>
   </ul>
 </section>
 

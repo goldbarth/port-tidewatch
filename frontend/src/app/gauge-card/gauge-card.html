@@ -1,7 +1,7 @@
 <article class="card" [class]="'stage-' + gauge().stage">
   <header>
     <h2>{{ gauge().gaugeId }}</h2>
-    <span class="badge">{{ gauge().stage }}</span>
+    <span class="badge">{{ stageLabel() }}</span>
   </header>
 
   <p class="level">
@@ -25,7 +25,7 @@
     class="chart"
     [attr.viewBox]="'0 0 ' + vbWidth + ' ' + vbHeight"
     role="img"
-    [attr.aria-label]="'Level trend for ' + gauge().gaugeId"
+    [attr.aria-label]="'Pegelverlauf für ' + gauge().gaugeId"
   >
     <!-- Stage bands: their edges are the 4.50 / 5.50 thresholds -->
     @for (b of bands; track b.stage) {
