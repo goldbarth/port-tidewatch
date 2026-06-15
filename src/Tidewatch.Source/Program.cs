@@ -1,31 +1,28 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using RabbitMQ.Client;
-using Tidewatch.Source.Configuration;
-using Tidewatch.Source.Publishing;
 using Tidewatch.Source;
+using Tidewatch.Source.Configuration;
+using Tidewatch.Source.Pegelonline;
+using Tidewatch.Source.Publishing;
 
-// Producer host: feeds the ingestion pipeline with Reading messages. The active source is
-// run as the host's hosted service (M7 source selection adds the Simulator | Pegelonline
-// switch here). For now the scripted simulator is the source.
+// Producer host: feeds the ingestion pipeline with Reading messages. Exactly one source is
+// active per run, chosen by the ReadingSource config switch (Simulator | Pegelonline), so
+// the same build serves the scripted demo or the real Elbe feed without recompiling.
 
 var builder = Host.CreateApplicationBuilder(args);
 
-// Scripted-surge tunables; the documented SURGE_PEAK_M / SURGE_PERIOD_S env vars win.
+// Source switch — validated at startup; a bad/empty value fails fast.
 builder.Services
-    .AddOptions<SimulatorOptions>()
-    .Bind(builder.Configuration.GetSection(SimulatorOptions.SectionName))
-    .PostConfigure(o =>
-    {
-        if (decimal.TryParse(Environment.GetEnvironmentVariable("SURGE_PEAK_M"), out var peak))
-            o.SurgePeakMeters = peak;
-        if (double.TryParse(Environment.GetEnvironmentVariable("SURGE_PERIOD_S"), out var period))
-            o.SurgePeriodSeconds = period;
-    });
+    .AddOptions<ReadingSourceOptions>()
+    .Configure(o => o.Active = builder.Configuration[ReadingSourceOptions.Key])
+    .ValidateOnStart();
+builder.Services.AddSingleton<IValidateOptions<ReadingSourceOptions>, ReadingSourceOptionsValidator>();
 
-// Publish target; the documented RABBITMQ_HOST env var wins.
+// Publish target is common to every source; the documented RABBITMQ_HOST env var wins.
 builder.Services
     .AddOptions<PublisherOptions>()
     .Bind(builder.Configuration.GetSection(PublisherOptions.SectionName))
@@ -48,7 +45,37 @@ builder.Services.AddOpenTelemetry()
         .AddSource(RabbitMQActivitySource.PublisherSourceName)
         .AddOtlpExporter());
 
-builder.Services.AddHostedService<SimulatorSource>();
+// Register only the selected source and its dependencies. An invalid value registers
+// nothing — ValidateOnStart then fails the host with a clear message.
+if (ReadingSourceParser.TryParse(builder.Configuration[ReadingSourceOptions.Key], out var kind))
+{
+    switch (kind)
+    {
+        case ReadingSourceKind.Simulator:
+            // Scripted-surge tunables; the documented SURGE_PEAK_M / SURGE_PERIOD_S win.
+            builder.Services
+                .AddOptions<SimulatorOptions>()
+                .Bind(builder.Configuration.GetSection(SimulatorOptions.SectionName))
+                .PostConfigure(o =>
+                {
+                    if (decimal.TryParse(Environment.GetEnvironmentVariable("SURGE_PEAK_M"), out var peak))
+                        o.SurgePeakMeters = peak;
+                    if (double.TryParse(Environment.GetEnvironmentVariable("SURGE_PERIOD_S"), out var period))
+                        o.SurgePeriodSeconds = period;
+                });
+            builder.Services.AddHostedService<SimulatorSource>();
+            break;
+
+        case ReadingSourceKind.Pegelonline:
+            builder.Services
+                .AddOptions<PegelonlineOptions>()
+                .Bind(builder.Configuration.GetSection(PegelonlineOptions.SectionName));
+            builder.Services.AddHttpClient();
+            builder.Services.AddSingleton<PegelonlineClient>();
+            builder.Services.AddHostedService<PegelonlineSource>();
+            break;
+    }
+}
 
 var host = builder.Build();
 await host.RunAsync();
