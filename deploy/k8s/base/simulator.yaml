@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: simulator
-          image: tidewatch-simulator:dev
+          image: tidewatch-source:dev
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:

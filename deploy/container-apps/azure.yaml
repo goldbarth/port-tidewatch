@@ -16,7 +16,7 @@ services:
       path: Dockerfile
       context: ../..
   simulator:
-    project: ../../src/Tidewatch.Simulator
+    project: ../../src/Tidewatch.Source
     language: dotnet
     host: containerapp
     docker:
