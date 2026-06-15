@@ -130,6 +130,9 @@ resource ingestion 'Microsoft.App/containerApps@2024-03-01' = {
           resources: { cpu: json('0.25'), memory: '0.5Gi' }
           env: [
             { name: 'RabbitMq__HostName', value: 'rabbitmq' }
+            // Allow the dashboard's cross-origin requests. References the SWA hostname
+            // directly so CORS is wired at provision time — no manual post-deploy step.
+            { name: 'Cors__AllowedOrigin', value: 'https://${dashboard.properties.defaultHostname}' }
           ]
         }
       ]
