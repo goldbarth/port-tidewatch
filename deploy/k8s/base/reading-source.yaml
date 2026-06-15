@@ -1,25 +1,30 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: simulator
+  name: reading-source
   namespace: tidewatch
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: simulator
+      app: reading-source
   template:
     metadata:
       labels:
-        app: simulator
+        app: reading-source
     spec:
       containers:
-        - name: simulator
+        - name: reading-source
           image: tidewatch-source:dev
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:
                 name: tidewatch-config
+          env:
+            # Active reading source. "Pegelonline" = the live WSV Elbe feed; flip to
+            # "Simulator" for the scripted surge demo. The same image serves both.
+            - name: ReadingSource
+              value: Pegelonline
           resources:
             requests:
               cpu: 50m

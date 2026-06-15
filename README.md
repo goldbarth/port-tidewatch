@@ -56,12 +56,15 @@ Kubernetes/GitOps — on real ground rather than in the abstract.
 
 ## What it does
 
-- A simulator emits water-level readings for a set of gauges.
+- A reading-source host emits water-level readings for a set of gauges —
+  either a scripted simulator or the live PEGELONLINE Elbe feed, chosen by
+  config (same build, no recompile).
 - An ingestion service consumes readings via RabbitMQ (with a dead-letter
   path for poison messages), evaluates each reading against the WADI
   threshold, and emits an alert state.
 - A read-only Angular dashboard shows current levels, per-gauge alert status
-  (normal / warning / severe), and a short recent-history trend.
+  (normal / warning / severe), and a short recent-history trend — plus a
+  client-side threshold "what-if" panel for exploring reclassification.
 
 ---
 
@@ -96,16 +99,16 @@ glance.
 ## Architecture
 
 ```
-┌─────────────┐    readings     ┌──────────────────┐  alerts / state    ┌─────────────┐
-│  simulator  │ ──────────────▶ │ ingestion service│ ─────────────────▶ │  dashboard  │
-│   (.NET)    │    RabbitMQ     │      (.NET)      │   REST (polling)   │  (Angular)  │
-└─────────────┘                 └──────────────────┘                    └─────────────┘
-                                          │
-                                          │ poison messages
-                                          ▼
-                                ┌──────────────────┐
-                                │ dead-letter queue│
-                                └──────────────────┘
+┌─────────────────────────────┐    readings     ┌──────────────────┐  alerts / state    ┌─────────────┐
+│ reading-source host (.NET)  │ ──────────────▶ │ ingestion service│ ─────────────────▶ │  dashboard  │
+│ one source, set by config:  │    RabbitMQ     │      (.NET)      │   REST (polling)   │  (Angular)  │
+│  • simulator (scripted)     │                 └──────────────────┘                    └─────────────┘
+│  • PEGELONLINE Elbe feed    │                           │
+└─────────────────────────────┘                           │ poison messages
+        ReadingSource switch                              ▼
+                                                ┌──────────────────┐
+                                                │ dead-letter queue│
+                                                └──────────────────┘
 ```
 
 ### Alert-state lifecycle
