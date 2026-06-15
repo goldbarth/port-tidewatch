@@ -24,6 +24,12 @@ interface Band {
   h: number;
 }
 
+const STAGE_LABELS: Record<Gauge['stage'], string> = {
+  normal: 'Normal',
+  warning: 'Warnung',
+  severe: 'Schwere Sturmflut',
+};
+
 @Component({
   selector: 'app-gauge-card',
   imports: [DecimalPipe],
@@ -35,6 +41,8 @@ export class GaugeCard {
 
   readonly vbWidth = VB_W;
   readonly vbHeight = VB_H;
+
+  readonly stageLabel = computed(() => STAGE_LABELS[this.gauge().stage]);
 
   // Stage bands as filled background areas (top → bottom): severe, warning, normal.
   // Their edges are the thresholds, so no separate reference lines are needed.
@@ -110,12 +118,11 @@ export class GaugeCard {
   });
 
   // Relative time in the current stage, from #28's timeInStageSeconds. Replaces the
-  // absolute "seit HH:MM:SS". Null (no alert recorded yet) reads as a calm "stable".
+  // absolute "seit HH:MM:SS". Null (no alert recorded yet) reads as a calm "stabil".
   readonly stageDuration = computed<string>(() => {
     const secs = this.gauge().timeInStageSeconds;
-    if (secs === null) return 'stable';
-    const stage = this.gauge().stage;
-    return `${stage} for ${formatDuration(secs)}`;
+    if (secs === null) return 'stabil';
+    return `${STAGE_LABELS[this.gauge().stage]} seit ${formatDuration(secs)}`;
   });
 }
 

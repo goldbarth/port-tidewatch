@@ -40,6 +40,17 @@ export class App {
     return 'normal';
   });
 
+  readonly overallStatusLabel = computed<string>(() => {
+    switch (this.overallStatus()) {
+      case 'severe':
+        return 'Schwere Sturmflut';
+      case 'warning':
+        return 'Warnung';
+      default:
+        return 'Normal';
+    }
+  });
+
   readonly highestLevel = computed<number | null>(() => {
     const levels = this.gauges()
       .map((g) => g.level)
@@ -67,11 +78,11 @@ export class App {
     const ago = this.secondsSinceUpdate();
     switch (this.connection()) {
       case 'live':
-        return `live · ${ago}s ago`;
+        return `live · vor ${ago} s`;
       case 'stale':
-        return `stale · ${ago}s ago`;
+        return `veraltet · vor ${ago} s`;
       default:
-        return 'connecting…';
+        return 'verbinde…';
     }
   });
 }
