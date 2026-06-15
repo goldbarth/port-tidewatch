@@ -35,10 +35,10 @@ On success azd prints outputs, including:
 
 > **Known issue — the dashboard step fails under azd.** azd deploys the Static Web App
 > with the SWA CLI using the environment name `default`, which the service rejects
-> (`The environment name "default" is invalid`). The infra, ingestion, and simulator
+> (`The environment name "default" is invalid`). The infra, ingestion, and reading-source
 > still provision/deploy fine; deploy the dashboard manually to the `production`
 > environment instead (step 2b). If azd stopped before the container apps deployed, run
-> `azd deploy ingestion` and `azd deploy simulator`.
+> `azd deploy ingestion` and `azd deploy reading-source`.
 
 ## 2. Wire the dashboard to the API (cross-origin)
 

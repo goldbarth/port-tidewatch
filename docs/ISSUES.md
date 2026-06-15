@@ -231,15 +231,15 @@ emits the same `Reading` records the simulator does. Station UUIDs are
 configuration. Honour the API's `ETag` / `Cache-Control` for conditional polling.
 
 **Acceptance criteria:**
-- [ ] Configured Hamburg Elbe gauges (e.g. St. Pauli, Bunthaus, Over,
+- [x] Configured Hamburg Elbe gauges (e.g. St. Pauli, Bunthaus, Over,
   Zollenspieker) by UUID in appsettings, not hard-coded.
-- [ ] cm → m conversion and PNP → NHN offset applied in an explicit mapping
+- [x] cm → m conversion and PNP → NHN offset applied in an explicit mapping
   layer; a unit test pins a known value end to end.
-- [ ] Conditional GET via `If-None-Match`; a `304` does not emit a duplicate
+- [x] Conditional GET via `If-None-Match`; a `304` does not emit a duplicate
   reading.
-- [ ] Transient API failure (timeout, 5xx) is logged and retried; the path does
+- [x] Transient API failure (timeout, 5xx) is logged and retried; the path does
   not crash the ingestion service.
-- [ ] `Reading` contract, evaluator, and consumer path are unchanged; only a new
+- [x] `Reading` contract, evaluator, and consumer path are unchanged; only a new
   source feeds them.
 
 ### Source selection: simulator vs. live feed
@@ -249,13 +249,13 @@ Make the active reading source selectable so the same build can run the scripted
 surge (demo) or the real Elbe feed (production-near), without recompiling.
 
 **Acceptance criteria:**
-- [ ] A single config switch (`ReadingSource: Simulator | Pegelonline`) selects
+- [x] A single config switch (`ReadingSource: Simulator | Pegelonline`) selects
   the active source at startup.
-- [ ] A bad/empty source configuration fails at startup, consistent with the
+- [x] A bad/empty source configuration fails at startup, consistent with the
   threshold-options validation pattern.
-- [ ] Both sources produce identical `Reading` shapes; downstream cannot tell
+- [x] Both sources produce identical `Reading` shapes; downstream cannot tell
   them apart.
-- [ ] README documents how to switch and which gauges the live feed covers.
+- [x] README documents how to switch and which gauges the live feed covers.
 
 ### Threshold "what-if" panel
 **Labels:** frontend, demo
@@ -265,12 +265,12 @@ thresholds and see the current windows re-classified live, illustrating the
 "thresholds are configuration, not code" decision against real data.
 
 **Acceptance criteria:**
-- [ ] Dragging a threshold re-derives the displayed stage per gauge client-side;
+- [x] Dragging a threshold re-derives the displayed stage per gauge client-side;
   no API write, no server state change.
-- [ ] A "reset to configured thresholds" control restores the appsettings
+- [x] A "reset to configured thresholds" control restores the appsettings
   values.
-- [ ] The panel is clearly marked as a local exploration, not a system setting.
-- [ ] Same-origin relative `/api` behaviour and read-only posture preserved.
+- [x] The panel is clearly marked as a local exploration, not a system setting.
+- [x] Same-origin relative `/api` behaviour and read-only posture preserved.
 
 ---
 

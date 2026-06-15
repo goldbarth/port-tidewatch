@@ -39,11 +39,11 @@ jobs:
         working-directory: deploy/container-apps
         run: azd provision --no-prompt
 
-      - name: Deploy containers (ingestion, simulator)
+      - name: Deploy containers (ingestion, reading-source)
         working-directory: deploy/container-apps
         run: |
           azd deploy ingestion --no-prompt
-          azd deploy simulator --no-prompt
+          azd deploy reading-source --no-prompt
 
       - name: Set up Node
         uses: actions/setup-node@v4
