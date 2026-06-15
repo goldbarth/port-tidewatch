@@ -37,23 +37,25 @@ On success azd prints outputs, including:
 > with the SWA CLI using the environment name `default`, which the service rejects
 > (`The environment name "default" is invalid`). The infra, ingestion, and reading-source
 > still provision/deploy fine; deploy the dashboard manually to the `production`
-> environment instead (step 2b). If azd stopped before the container apps deployed, run
+> environment instead (step 2). If azd stopped before the container apps deployed, run
 > `azd deploy ingestion` and `azd deploy reading-source`.
 
 ## 2. Wire the dashboard to the API (cross-origin)
 
-The SPA and the API are on different origins, so two one-time links are needed.
+The SPA and the API are on different origins. CORS is wired automatically — the
+ingestion container app reads its allowed origin from the SWA hostname at provision
+time (the bicep sets `Cors__AllowedOrigin` to `https://${dashboard.defaultHostname}`),
+so no manual CORS step is needed. Only the SPA → API link below is a manual one-time
+step (it works around the azd `default`-env issue).
 
-**a) Allow the dashboard origin on the API (CORS):**
-```bash
-az containerapp update \
-  --name ingestion \
-  --resource-group rg-<AZURE_ENV_NAME> \
-  --set-env-vars Cors__AllowedOrigin=https://<DASHBOARD_URL>
-```
-(`Cors__AllowedOrigin` → the `Cors:AllowedOrigin` config the API reads.)
+> **Fallback** — if CORS is ever wrong (e.g. an older deploy without the bicep env),
+> set it by hand:
+> ```bash
+> az containerapp update --name ingestion --resource-group rg-<AZURE_ENV_NAME> \
+>   --set-env-vars Cors__AllowedOrigin=https://<DASHBOARD_URL>
+> ```
 
-**b) Point the SPA at the API and deploy it manually.** Set the API base URL, rebuild,
+**Point the SPA at the API and deploy it manually.** Set the API base URL, rebuild,
 and deploy to the `production` environment with the SWA CLI (works around the azd
 `default`-env issue above). Run from the repo root; replace the host with your
 `INGESTION_FQDN` and the SWA name with yours (`az staticwebapp list -g rg-<env>`):
@@ -109,9 +111,9 @@ registration with a GitHub federated credential):
 | Symptom | Cause / fix |
 |---------|-------------|
 | `AKSCapacityHeavyUsage` creating the Container Apps environment | Azure-side capacity in that region (CA environments run on AKS). Switch region: `azd down --purge --force`, `azd env set AZURE_LOCATION northeurope` (or `germanywestcentral`/`swedencentral`), `azd up`. The RG region is immutable, so tear down first. |
-| Dashboard step fails: `The environment name "default" is invalid` | azd deploys the SWA with env `default`, which the service rejects. Deploy manually with `--env production` (step 2b). |
+| Dashboard step fails: `The environment name "default" is invalid` | azd deploys the SWA with env `default`, which the service rejects. Deploy manually with `--env production` (step 2). |
 | `azd up` fails creating the Static Web App | SWA is region-limited. Set `staticWebAppLocation` (e.g. `westeurope`, `eastus2`) — it is a separate Bicep param from the main `location`. |
 | ingestion revision can't pull from ACR | AcrPull role assignment may still be propagating on the first deploy. Re-run `azd deploy ingestion` after a minute. |
 | ingestion can't reach the broker | rabbitmq uses internal TCP ingress on 5672; the API reaches it at `rabbitmq` (the `RabbitMq__HostName` env). Check the rabbitmq revision is running. |
-| Dashboard loads but shows no data | CORS origin not set (step 2a) or `config.json` still empty/not redeployed (step 2b). Check the browser console for CORS errors. |
+| Dashboard loads but shows no data | `config.json` still empty/not redeployed (step 2), or CORS wrong (normally automatic via bicep — see the step 2 fallback). Check the browser console for CORS errors. |
 | OTLP export errors in ingestion logs | Expected — the Container Apps stack ships no tracing backend (ADR-003). Harmless; the API and consumer keep working. |
