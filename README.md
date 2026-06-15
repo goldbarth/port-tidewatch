@@ -31,13 +31,19 @@ threshold-based storm-surge alerting and a read-only monitoring dashboard.
 > 📖 **Written up on my site:** [the project](https://www.goldbarth.dev/projects/port-tidewatch),
 > and — in German, leicht verdaulich — [the surge-evaluator decision (ADR-004)](https://www.goldbarth.dev/decisions/surge-evaluator-decisions).
 
+<p align="center">
+  <img src="docs/assets/demo/tidewatch-dashboard-screenshot-4.png" alt="Tidewatch dashboard on the live PEGELONLINE Elbe feed — four Hamburg gauges, all normal" width="860">
+</p>
+<p align="center"><sub>Live dashboard on <strong>real WSV/PEGELONLINE data</strong> — the public Hamburg Elbe gauges (St. Pauli, Zollenspieker, Over, Bunthaus), polled live.</sub></p>
+
 ---
 
 The domain is modelled on the Hamburg storm-surge warning service (WADI):
 a warning is raised when an expected surge peak can exceed **4.50 m above
 sea level (NHN)** / 2.40 m above mean high water (MThw). tidewatch ingests
-simulated water-level readings, evaluates them against that threshold, and
-surfaces the result.
+water-level readings — from the **live WSV/PEGELONLINE Elbe feed** (the German
+Waterways and Shipping Administration's open gauge data) or a scripted simulator
+— evaluates them against that threshold, and surfaces the result.
 
 > **Scope is intentionally narrow:** one domain, one ingestion path, no write
 > operations from the UI. The goal is a reliable, observable ingestion
@@ -63,12 +69,13 @@ Kubernetes/GitOps — on real ground rather than in the abstract.
   path for poison messages), evaluates each reading against the WADI
   threshold, and emits an alert state.
 - A read-only Angular dashboard shows current levels, per-gauge alert status
-  (normal / warning / severe), and a short recent-history trend — plus a
-  client-side threshold "what-if" panel for exploring reclassification.
+  (normal / warning / severe), and a short recent-history trend.
 
 ---
 
 ## Demo
+
+### Scripted storm surge
 
 <table>
 <tr>
@@ -228,7 +235,7 @@ issue-by-issue breakdown lives in **[`docs/ISSUES.md`](docs/ISSUES.md)**.
 | **M4 · Dashboard**                         | Angular read-only view — levels, status, trend | Done |
 | **M5 · Deploy**                            | Kubernetes + Argo CD (GitOps, primary) and Azure Container Apps (IaC + CI) | Done |
 | **M6 · Demo & polish (v1.1)**              | Storm-surge scenario, dashboard polish, richer signals, demo assets, alert events | Done |
-| **M7 · Real data (v1.2)**                  | Real PEGELONLINE Elbe feed alongside the simulator, source selection, threshold what-if panel | Done |
+| **M7 · Real data (v1.2)**                  | Real PEGELONLINE Elbe feed alongside the simulator, source selection | Done |
 | **M8 · Observability made visible (v1.3)** | Surface the OpenTelemetry path — latency pulse, Jaeger deep-link, optional trace waterfall | Planned |
 
 > **M5 ordering:** Kubernetes + Argo CD is the primary deployment, run on a local
