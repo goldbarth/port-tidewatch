@@ -1,7 +1,5 @@
 using System.Diagnostics;
 using System.Text.Json;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using Tidewatch.Contracts;
@@ -111,7 +109,6 @@ public sealed class ReadingConsumer : BackgroundService
         await channel.BasicAckAsync(ea.DeliveryTag, multiple: false, cancellationToken);
     }
 
-    /// <summary>Basic plausibility check before a reading is processed.</summary>
     private static bool IsValid([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] Reading? reading) =>
         reading is not null
         && !string.IsNullOrWhiteSpace(reading.GaugeId)

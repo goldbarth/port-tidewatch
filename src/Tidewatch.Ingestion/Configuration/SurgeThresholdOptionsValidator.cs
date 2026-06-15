@@ -24,7 +24,6 @@ public sealed class SurgeThresholdOptionsValidator : IValidateOptions<SurgeThres
             return Result(errors);
         }
 
-        // Stages must be sorted ascending by MinMeters with no gaps in ordering.
         for (var i = 1; i < options.Stages.Count; i++)
         {
             if (options.Stages[i].MinMeters <= options.Stages[i - 1].MinMeters)
@@ -34,7 +33,6 @@ public sealed class SurgeThresholdOptionsValidator : IValidateOptions<SurgeThres
                     $"'{options.Stages[i - 1].Name}' ({options.Stages[i - 1].MinMeters}).");
         }
 
-        // A "normal" stage anchored at 0 must exist.
         var normal = options.Stages.FirstOrDefault(s =>
             string.Equals(s.Name, "normal", StringComparison.OrdinalIgnoreCase));
         if (normal is null)
