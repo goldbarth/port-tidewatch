@@ -1,16 +1,17 @@
 import { Component, input, computed } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { Gauge } from '../gauge.model';
+import { CONFIGURED_THRESHOLDS } from '../thresholds';
 
 // Chart geometry. The y-axis is a FIXED level domain (0–6 m NHN) so the stage bands and
 // the peak marker sit at true heights — unlike an auto-scaled sparkline. The bands are
 // the threshold reference: their shared edges are the warning (4.50) and severe (5.50)
-// boundaries.
+// boundaries, drawn from the configured thresholds.
 const VB_W = 100;
 const VB_H = 60;
 const DOMAIN_MAX = 6; // m NHN
-const WARNING_M = 4.5;
-const SEVERE_M = 5.5;
+const WARNING_M = CONFIGURED_THRESHOLDS.warning;
+const SEVERE_M = CONFIGURED_THRESHOLDS.severe;
 
 /** Maps a level (m NHN) to a y coordinate; higher level → smaller y (drawn higher). */
 function yOf(level: number): number {

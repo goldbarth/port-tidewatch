@@ -1,0 +1,210 @@
+/* Per-stage tokens, same derivation as the gauge cards. */
+.stage-normal {
+  --stage: var(--stage-normal-fg);
+  --stage-base: var(--stage-normal);
+}
+.stage-warning {
+  --stage: var(--stage-warning-fg);
+  --stage-base: var(--stage-warning);
+}
+.stage-severe {
+  --stage: var(--stage-severe-fg);
+  --stage-base: var(--stage-severe);
+}
+
+.whatif {
+  margin-top: 1.75rem;
+  padding: 1.1rem 1.25rem 1.25rem;
+  background: color-mix(in srgb, var(--bg-1) 85%, transparent);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.whatif-head .title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.whatif-head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.15rem;
+  color: var(--fg);
+}
+
+/* Make plain that this is a viewer toy, not a system setting. */
+.tag {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  padding: 0.15rem 0.45rem;
+  border: 1px dashed var(--line);
+  border-radius: 999px;
+}
+
+.note {
+  margin: 0.45rem 0 0;
+  max-width: 62ch;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--fg-dim);
+}
+
+/* ── Controls ── */
+.controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 1rem 1.4rem;
+  align-items: end;
+  margin: 1.1rem 0 1.25rem;
+}
+
+.slider label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+}
+
+.slider .k {
+  letter-spacing: 0.04em;
+  color: var(--stage, var(--fg-dim));
+}
+.slider .v {
+  color: var(--fg);
+}
+.slider .v small {
+  color: var(--fg-faint);
+  font-size: 0.68rem;
+}
+
+.slider input[type='range'] {
+  width: 100%;
+  accent-color: var(--stage);
+  cursor: pointer;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.diff {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--fg-faint);
+  transition: color 0.3s ease;
+}
+.diff.on {
+  color: var(--stage-warning-fg);
+}
+
+.actions button {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  color: var(--fg);
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.4rem 0.7rem;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    opacity 0.2s ease;
+}
+.actions button:hover:not(:disabled) {
+  border-color: var(--fg-faint);
+}
+.actions button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ── Per-gauge reclassification ── */
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.5rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.7rem;
+  background: color-mix(in srgb, var(--bg-2) 60%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.row.differs {
+  border-color: color-mix(in srgb, var(--stage-warning-fg) 45%, var(--line));
+}
+
+.row .id {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--fg);
+}
+.row .lvl {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--fg-dim);
+}
+.row .lvl small {
+  color: var(--fg-faint);
+}
+
+.chip {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  color: var(--stage, var(--fg-dim));
+  background: color-mix(in srgb, var(--stage-base, var(--fg-faint)) 22%, transparent);
+  border: 1px solid color-mix(in srgb, var(--stage, var(--fg-faint)) 35%, transparent);
+}
+.chip.empty {
+  color: var(--fg-faint);
+  background: transparent;
+}
+
+.was {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--fg-faint);
+}
+
+.waiting {
+  list-style: none;
+  color: var(--fg-faint);
+  font-style: italic;
+}
+
+@media (max-width: 640px) {
+  .controls {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+  .actions {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
