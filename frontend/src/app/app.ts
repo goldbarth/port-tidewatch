@@ -33,7 +33,6 @@ export class App {
     return c;
   });
 
-  // Overall status is the worst stage currently present.
   readonly overallStatus = computed<'normal' | 'warning' | 'severe'>(() => {
     const c = this.counts();
     if (c.severe > 0) return 'severe';

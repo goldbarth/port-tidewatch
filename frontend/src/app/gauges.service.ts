@@ -36,6 +36,5 @@ export class GaugesService {
     { initialValue: INITIAL },
   );
 
-  // Convenience projection for views that only need the gauges.
   readonly gauges = computed(() => this.state().gauges);
 }

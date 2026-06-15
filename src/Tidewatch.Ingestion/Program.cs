@@ -16,7 +16,6 @@ using Tidewatch.Ingestion.Transport;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Options binding with startup validation.
 builder.Services
     .AddOptions<SurgeThresholdOptions>()
     .Bind(builder.Configuration.GetSection(SurgeThresholdOptions.SectionName))
@@ -28,15 +27,12 @@ builder.Services
     .AddOptions<RabbitMqOptions>()
     .Bind(builder.Configuration.GetSection(RabbitMqOptions.SectionName));
 
-// Transport infrastructure and live state are singletons.
 builder.Services.AddSingleton<RabbitMqTransport>();
 builder.Services.AddSingleton<IAlertPublisher, RabbitMqAlertPublisher>();
 builder.Services.AddSingleton<GaugeStateHolder>();
 
-// Evaluator (internals are the next focused session).
 builder.Services.AddSingleton<ISurgeEvaluator, SurgeEvaluator>();
 
-// Consumer as a hosted service.
 builder.Services.AddHostedService<ReadingConsumer>();
 
 // CORS for the dashboard when it is served from a different origin (Static Web Apps in
