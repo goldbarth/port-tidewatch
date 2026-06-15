@@ -199,8 +199,9 @@ stays the thing that gets done well:
 - **No auth on the API** — single-tenant showcase; the surface is two read-only
   endpoints.
 - **One domain, one ingestion path** — no multi-network federation, no
-  multi-tenancy. A real public gauge feed (PEGELONLINE) is planned alongside the
-  simulator in v1.2 (M7); for the current cut the simulator is the sole source.
+  multi-tenancy. A real public gauge feed (PEGELONLINE) ships in v1.2 (M7),
+  selectable against the simulator via the `ReadingSource` switch; one source is
+  active per run (they are not run side by side).
 - **Notification delivery** — `ApplyStageChange` now publishes alert events at
   its single chokepoint (v1.1 / M6), but *acting* on them (email / push, a
   notification consumer) stays out of scope; the showcase ends at the event.
@@ -209,9 +210,10 @@ stays the thing that gets done well:
 
 ## Status
 
-Milestones M1–M6 are complete — **v1.0 is presentable end to end and v1.1 (demo
-& polish) has landed.** M7–M8 (v1.2–v1.3) are planned post-v1.1 work. Every
-intermediate state is built to stay coherent — see the roadmap.
+Milestones M1–M7 are complete — **v1.0 is presentable end to end, v1.1 (demo
+& polish) and v1.2 (real PEGELONLINE data) have landed.** M8 (v1.3) is the
+remaining planned work. Every intermediate state is built to stay coherent —
+see the roadmap.
 
 ## Roadmap
 
@@ -226,7 +228,7 @@ issue-by-issue breakdown lives in **[`docs/ISSUES.md`](docs/ISSUES.md)**.
 | **M4 · Dashboard**                         | Angular read-only view — levels, status, trend | Done |
 | **M5 · Deploy**                            | Kubernetes + Argo CD (GitOps, primary) and Azure Container Apps (IaC + CI) | Done |
 | **M6 · Demo & polish (v1.1)**              | Storm-surge scenario, dashboard polish, richer signals, demo assets, alert events | Done |
-| **M7 · Real data (v1.2)**                  | Real PEGELONLINE Elbe feed alongside the simulator, source selection, threshold what-if panel | Planned |
+| **M7 · Real data (v1.2)**                  | Real PEGELONLINE Elbe feed alongside the simulator, source selection, threshold what-if panel | Done |
 | **M8 · Observability made visible (v1.3)** | Surface the OpenTelemetry path — latency pulse, Jaeger deep-link, optional trace waterfall | Planned |
 
 > **M5 ordering:** Kubernetes + Argo CD is the primary deployment, run on a local
