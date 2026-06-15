@@ -69,12 +69,14 @@ Kubernetes/GitOps — on real ground rather than in the abstract.
 
 <table>
 <tr>
-<td width="50%"><img src="docs/assets/demo/tidewatch-dashboard-screenshot-1.png" alt="Tidewatch dashboard with every gauge in the normal stage"></td>
-<td width="50%"><img src="docs/assets/demo/tidewatch-dashboard-screenshot-2.png" alt="Tidewatch dashboard during a storm surge, the CUX gauge in the severe stage"></td>
+<td width="33%"><img src="docs/assets/demo/tidewatch-dashboard-screenshot-1.png" alt="Tidewatch dashboard with every gauge in the normal stage"></td>
+<td width="33%"><img src="docs/assets/demo/tidewatch-dashboard-screenshot-2.png" alt="Tidewatch dashboard during a storm surge, the CUX gauge in the warning stage"></td>
+<td width="33%"><img src="docs/assets/demo/tidewatch-dashboard-screenshot-3.png" alt="Tidewatch dashboard at the surge peak, the CUX gauge in the severe stage"></td>
 </tr>
 <tr>
 <td align="center"><sub>Calm — every gauge <code>normal</code>, overall status normal.</sub></td>
-<td align="center"><sub>Surge peak — <code>CUX</code> crosses <code>severe</code> (5.65 m), overall status severe.</sub></td>
+<td align="center"><sub>Surge rising — <code>CUX</code> in <code>warning</code> (5.37 m), overall status warning.</sub></td>
+<td align="center"><sub>Surge peak — <code>CUX</code> crosses <code>severe</code> (5.83 m), overall status severe.</sub></td>
 </tr>
 </table>
 
