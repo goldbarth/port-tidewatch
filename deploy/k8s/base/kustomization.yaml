@@ -8,7 +8,7 @@ resources:
   - rabbitmq.yaml
   - jaeger.yaml
   - ingestion.yaml
-  - simulator.yaml
+  - reading-source.yaml
   - dashboard.yaml
   - ingress.yaml
 

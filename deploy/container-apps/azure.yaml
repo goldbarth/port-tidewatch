@@ -15,7 +15,7 @@ services:
       # Tidewatch.Contracts, which lives two levels up from the service project).
       path: Dockerfile
       context: ../..
-  simulator:
+  reading-source:
     project: ../../src/Tidewatch.Source
     language: dotnet
     host: containerapp

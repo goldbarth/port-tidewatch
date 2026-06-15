@@ -138,11 +138,12 @@ resource ingestion 'Microsoft.App/containerApps@2024-03-01' = {
   }
 }
 
-// Simulator — no ingress. azd deploys the built image here.
-resource simulator 'Microsoft.App/containerApps@2024-03-01' = {
-  name: 'simulator'
+// Reading-source producer — no ingress. azd deploys the built image here. Runs the active
+// reading source (Pegelonline live feed by default; Simulator for the scripted demo).
+resource readingSource 'Microsoft.App/containerApps@2024-03-01' = {
+  name: 'reading-source'
   location: location
-  tags: union(tags, { 'azd-service-name': 'simulator' })
+  tags: union(tags, { 'azd-service-name': 'reading-source' })
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: { '${identity.id}': {} }
@@ -158,11 +159,14 @@ resource simulator 'Microsoft.App/containerApps@2024-03-01' = {
     template: {
       containers: [
         {
-          name: 'simulator'
+          name: 'reading-source'
           image: placeholderImage
           resources: { cpu: json('0.25'), memory: '0.5Gi' }
           env: [
             { name: 'RABBITMQ_HOST', value: 'rabbitmq' }
+            // Active reading source. 'Pegelonline' = the live WSV Elbe feed; flip to
+            // 'Simulator' for the scripted surge demo. The same image serves both.
+            { name: 'ReadingSource', value: 'Pegelonline' }
           ]
         }
       ]

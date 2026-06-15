@@ -4,7 +4,7 @@ Run the whole tidewatch stack on a local **kind** cluster, deployed by **Argo CD
 via GitOps. No cloud, no cost. The same manifests move to AKS later by pointing
 Argo CD at a different cluster — see ADR-003.
 
-Stack in-cluster: `rabbitmq` → `ingestion` (HTTP API + consumer) ← `simulator`,
+Stack in-cluster: `rabbitmq` → `ingestion` (HTTP API + consumer) ← `reading-source`,
 `dashboard` (nginx SPA), `jaeger` (traces). An Ingress routes `/` to the
 dashboard and `/api` to the ingestion API (same origin, no CORS).
 
@@ -93,7 +93,7 @@ This is the same manifests, minus the GitOps layer — handy before pushing.
 kubectl get pods -n tidewatch -w
 ```
 
-Expect `rabbitmq`, `jaeger`, `ingestion`, `simulator`, `dashboard` all `Running`.
+Expect `rabbitmq`, `jaeger`, `ingestion`, `reading-source`, `dashboard` all `Running`.
 `ingestion` may restart a couple of times until `rabbitmq` is ready — that's the
 consumer reconnecting, it settles.
 
