@@ -4,13 +4,12 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { timer } from 'rxjs';
 import { GaugesService } from './gauges.service';
 import { GaugeCard } from './gauge-card/gauge-card';
-import { WhatIfPanel } from './what-if-panel/what-if-panel';
 
 const STALE_AFTER_S = 12; // ~3 missed polls at the 4s cadence
 
 @Component({
   selector: 'app-root',
-  imports: [GaugeCard, WhatIfPanel, DecimalPipe],
+  imports: [GaugeCard, DecimalPipe],
   templateUrl: './app.html',
   styleUrl: './app.css',
   // Accent (set in global styles) tracks the worst stage currently present.
