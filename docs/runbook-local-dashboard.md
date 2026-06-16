@@ -98,24 +98,6 @@ Open **http://localhost:4200** in the browser. You should see:
 > stage quickly, raise a gauge's level by editing the simulator, or publish a
 > high reading manually.
 
-> **Jaeger deep-link (M8):** each card shows a processing-latency pulse; the
-> "Traces ↗" link next to it opens that gauge's ingest traces in Jaeger. It only
-> appears when `jaegerBaseUrl` is set in `frontend/public/config.json`. For the
-> local Jaeger from step 2:
->
-> ```json
-> { "apiBaseUrl": "", "jaegerBaseUrl": "http://localhost:16687" }
-> ```
->
-> Leave `jaegerBaseUrl` empty (the repo default) to hide the link where Jaeger
-> isn't reachable. Reset the file afterwards (`git checkout frontend/public/config.json`).
-
-> **Under-the-hood trace waterfall (M8, optional):** the "Under the hood" tab
-> draws one ingest trace's spans as time-offset bars. It reads the Jaeger query
-> API through the dev proxy (`/jaeger-api` → `localhost:16687`, see
-> `frontend/proxy.conf.json`), so it works out of the box once the step-2 Jaeger
-> is running — no config needed. With no Jaeger reachable it just shows a notice.
-
 ---
 
 ## Quick API checks (without the browser)

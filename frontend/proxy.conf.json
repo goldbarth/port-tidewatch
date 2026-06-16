@@ -2,10 +2,5 @@
   "/api": {
     "target": "http://localhost:5080",
     "secure": false
-  },
-  "/jaeger-api": {
-    "target": "http://localhost:16687",
-    "secure": false,
-    "pathRewrite": { "^/jaeger-api": "" }
   }
 }

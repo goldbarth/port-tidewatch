@@ -33,11 +33,6 @@ builder.Services.AddSingleton<GaugeStateHolder>();
 
 builder.Services.AddSingleton<ISurgeEvaluator, SurgeEvaluator>();
 
-// Derives per-gauge processing latency from the existing ingest span (M8), kept off the
-// consumer path. The listener must be started for samples to be collected.
-builder.Services.AddSingleton<ProcessingLatencyStore>();
-builder.Services.AddHostedService<ProcessingLatencyListener>();
-
 builder.Services.AddHostedService<ReadingConsumer>();
 
 // CORS for the dashboard when it is served from a different origin (Static Web Apps in
@@ -69,10 +64,10 @@ app.UseCors();
 // Read-only HTTP surface for the dashboard. The reading consumer keeps running as a
 // hosted service alongside it.
 app.MapGet("/healthz", () => Results.Ok("ok"));
-app.MapGet("/api/gauges", (GaugeStateHolder state, ProcessingLatencyStore latency) =>
+app.MapGet("/api/gauges", (GaugeStateHolder state) =>
 {
     var now = DateTimeOffset.UtcNow;
-    return state.Snapshot().Select(s => GaugeMapper.ToDto(s, now, latency.Samples(s.GaugeId)));
+    return state.Snapshot().Select(s => GaugeMapper.ToDto(s, now));
 });
 
 app.Run();

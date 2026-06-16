@@ -1,7 +1,8 @@
 # ADR-003: Azure Container Apps vs. Kubernetes + Argo CD
 
 **Date:** 2026-06-11  
-**Status:** Accepted
+**Status:** Accepted  
+**Amended:** 2026-06-16 — added observability-visualisation scope consequence (M8)
 
 ---
 
@@ -79,11 +80,23 @@ nginx container, and the Container Apps stack pairs with Static Web Apps.
 - Two dashboard hosting paths (in-cluster nginx for Kubernetes, Static Web Apps
   for Container Apps) is slightly more surface than a single path. Accepted to
   keep both targets idiomatic.
+- Observability *visualisation* (a dashboard view of the OpenTelemetry path) is
+  out of scope on these targets. The instrumentation from M3 stays, but
+  surfacing it visually presupposes a distributed deployment with real network
+  hops, broker backpressure, and a reachable Jaeger — none of which the kind
+  single-node or SWA-Free targets provide. The latency signal on a local
+  cluster is a flat near-zero line; it measures an in-memory method call, not a
+  pipeline under load, and Jaeger is not reachable from a cloud-hosted SPA. M8
+  ("Observability sichtbar") is dropped on this basis — not deferred, since the
+  deployment situation that would justify it does not change on its own. See the
+  AKS revisit path below: a real cluster is the precondition that makes the
+  signal worth showing.
 
 ### When to revisit
 
 - If a budget appears, the Kubernetes target can move from kind to AKS by
   swapping the cluster and pointing Argo CD at it — the manifests are already
-  the portable part.
+  the portable part. The same move is the precondition for revisiting M8: a
+  distributed cluster is what gives the latency signal something to show.
 - If the Container Apps stack ever needs to be permanently live, revisit the
   scale-to-zero/tear-down model against the free grant limits.
