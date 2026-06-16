@@ -168,6 +168,27 @@ public sealed class GaugeMapperTests
     }
 
     [Fact]
+    public void LastReadingAt_carries_the_arrival_time_from_the_snapshot()
+    {
+        var arrivedAt = T0.AddMinutes(5);
+        var snapshot = new GaugeSnapshot("CUX", Window(1.0m, 1.1m), null, arrivedAt);
+
+        var dto = GaugeMapper.ToDto(snapshot, T0.AddMinutes(6));
+
+        // Distinct from MeasuredAt (the source's measurement time) — this is when we received it.
+        Assert.Equal(arrivedAt, dto.LastReadingAt);
+        Assert.Equal(T0.AddMinutes(1), dto.MeasuredAt);
+    }
+
+    [Fact]
+    public void LastReadingAt_is_null_when_nothing_has_arrived()
+    {
+        var dto = GaugeMapper.ToDto(Snapshot([]), T0);
+
+        Assert.Null(dto.LastReadingAt);
+    }
+
+    [Fact]
     public void Cadence_is_null_with_fewer_than_two_readings()
     {
         var dto = GaugeMapper.ToDto(Snapshot(Window(1.0m)), T0);

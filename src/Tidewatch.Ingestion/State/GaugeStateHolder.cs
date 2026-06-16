@@ -35,6 +35,10 @@ public sealed class GaugeStateHolder
         lock (state.Gate)
         {
             state.Window.Add(reading);
+            // Arrival time on our clock — distinct from reading.Timestamp, which carries the
+            // source's (often minutes-old) measurement time. Freshness keys off arrival so a
+            // source with publication lag is not flagged stale while data keeps flowing.
+            state.LastReceivedAt = DateTimeOffset.UtcNow;
             var cutoff = reading.Timestamp - _trendWindow;
             state.Window.RemoveAll(r => r.Timestamp < cutoff);
         }
@@ -65,7 +69,7 @@ public sealed class GaugeStateHolder
         foreach (var (id, state) in _gauges)
         {
             lock (state.Gate)
-                result.Add(new GaugeSnapshot(id, state.Window.ToArray(), state.Alert));
+                result.Add(new GaugeSnapshot(id, state.Window.ToArray(), state.Alert, state.LastReceivedAt));
         }
         return result;
     }
@@ -101,9 +105,10 @@ public sealed class GaugeStateHolder
         public object Gate { get; } = new();
         public List<Reading> Window { get; } = [];
         public AlertState? Alert { get; set; }
+        public DateTimeOffset? LastReceivedAt { get; set; }
     }
 }
 
-/// <summary>A gauge's raw reading window and current alert at snapshot time.</summary>
+/// <summary>A gauge's raw reading window, current alert, and last arrival time at snapshot time.</summary>
 public sealed record GaugeSnapshot(
-    string GaugeId, IReadOnlyList<Reading> Window, AlertState? Alert);
+    string GaugeId, IReadOnlyList<Reading> Window, AlertState? Alert, DateTimeOffset? LastReceivedAt = null);

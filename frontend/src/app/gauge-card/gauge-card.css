@@ -61,7 +61,6 @@ header {
 
 h2 {
   margin: 0;
-  margin-right: auto; /* push badge + freshness to the right edge */
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 1.15rem;
@@ -69,7 +68,13 @@ h2 {
   color: var(--fg);
 }
 
-/* Per-tile measurement freshness: age of the reading, not the poll (#63). */
+/* Per-tile freshness, on its own row under the stage badge (#63). */
+.freshness-row {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0.15rem 0 0;
+}
+
 .freshness {
   display: inline-flex;
   align-items: center;
