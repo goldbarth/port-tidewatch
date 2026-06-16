@@ -1,15 +1,16 @@
-import { Component, inject, computed } from '@angular/core';
+import { Component, inject, computed, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { timer } from 'rxjs';
 import { GaugesService } from './gauges.service';
 import { GaugeCard } from './gauge-card/gauge-card';
+import { TraceWaterfall } from './trace-waterfall/trace-waterfall';
 
 const STALE_AFTER_S = 12; // ~3 missed polls at the 4s cadence
 
 @Component({
   selector: 'app-root',
-  imports: [GaugeCard, DecimalPipe],
+  imports: [GaugeCard, DecimalPipe, TraceWaterfall],
   templateUrl: './app.html',
   styleUrl: './app.css',
   // Accent (set in global styles) tracks the worst stage currently present.
@@ -23,6 +24,9 @@ export class App {
   private readonly service = inject(GaugesService);
   private readonly state = this.service.state;
   readonly gauges = computed(() => this.state().gauges);
+
+  // Domain view vs. the under-the-hood trace view. Kept apart on purpose (M8 stretch).
+  readonly view = signal<'gauges' | 'trace'>('gauges');
 
   // 1 Hz clock so "updated Ns ago" advances between polls.
   private readonly now = toSignal(timer(0, 1000), { initialValue: 0 });

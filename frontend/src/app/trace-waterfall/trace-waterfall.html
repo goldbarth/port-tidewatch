@@ -1,0 +1,55 @@
+<section class="hood">
+  <header class="hood-head">
+    <div class="hood-title">
+      <h2>Trace-Wasserfall</h2>
+      <span class="hint">Ein Ingest-Trace, Spans als Zeitbalken — aus der OpenTelemetry-Instrumentierung.</span>
+    </div>
+    <div class="hood-controls">
+      <label>
+        Pegel
+        <select [value]="selected() ?? ''" (change)="onSelect($any($event.target).value)">
+          <option value="" disabled>– wählen –</option>
+          @for (id of gaugeIds(); track id) {
+            <option [value]="id">{{ id }}</option>
+          }
+        </select>
+      </label>
+      <button type="button" (click)="load()" [disabled]="!selected() || status() === 'loading'">
+        Neu laden
+      </button>
+    </div>
+  </header>
+
+  @if (status() === 'ok') {
+    <div class="wf" [style.height.px]="heightPx()">
+      <ol class="wf-labels">
+        @for (b of bars(); track b.spanID) {
+          <li [style.height.px]="rowPx" [style.padding-left.px]="b.depth * 12">
+            <span class="op">{{ b.label }}</span>
+            <span class="dur">{{ b.durMs }} ms</span>
+          </li>
+        }
+      </ol>
+      <svg
+        class="wf-bars"
+        [attr.viewBox]="viewBox()"
+        preserveAspectRatio="none"
+        role="img"
+        aria-label="Trace-Spans als Zeitbalken"
+      >
+        @for (b of bars(); track b.spanID) {
+          <rect
+            class="wf-bar"
+            [attr.x]="b.x"
+            [attr.y]="b.y"
+            [attr.width]="b.w"
+            [attr.height]="barHeight"
+            rx="0.5"
+          />
+        }
+      </svg>
+    </div>
+  } @else {
+    <p class="hood-msg">{{ statusText() }}</p>
+  }
+</section>
