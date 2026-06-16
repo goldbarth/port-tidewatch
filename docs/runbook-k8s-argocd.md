@@ -107,16 +107,6 @@ consumer reconnecting, it settles.
   # open http://localhost:16686 → service tidewatch-ingestion
   ```
 
-> **Dashboard "Traces ↗" deep-link (M8):** hidden by default because the bundled
-> `config.json` leaves `jaegerBaseUrl` empty (Jaeger has no ingress route here).
-> To enable it, expose Jaeger (port-forward as above or add an ingress route) and
-> set `jaegerBaseUrl` to that reachable base URL in the dashboard's `config.json`.
-
-> **Under-the-hood trace waterfall (M8, optional):** the "Under the hood" tab
-> fetches traces from a same-origin `/jaeger-api` path. There is no such ingress
-> route in this base, so the tab shows a graceful notice; add a route mapping
-> `/jaeger-api` → the Jaeger query service (port 16686) to enable it.
-
 ## 7. Teardown
 
 ```bash
