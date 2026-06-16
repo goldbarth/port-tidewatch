@@ -1,9 +1,8 @@
 import { Component, inject, computed } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { timer } from 'rxjs';
 import { GaugesService } from './gauges.service';
 import { GaugeCard } from './gauge-card/gauge-card';
+import { Clock } from './clock';
 
 const STALE_AFTER_S = 12; // ~3 missed polls at the 4s cadence
 
@@ -21,11 +20,9 @@ const STALE_AFTER_S = 12; // ~3 missed polls at the 4s cadence
 })
 export class App {
   private readonly service = inject(GaugesService);
+  private readonly clock = inject(Clock);
   private readonly state = this.service.state;
   readonly gauges = computed(() => this.state().gauges);
-
-  // 1 Hz clock so "updated Ns ago" advances between polls.
-  private readonly now = toSignal(timer(0, 1000), { initialValue: 0 });
 
   readonly counts = computed(() => {
     const c = { normal: 0, warning: 0, severe: 0 };
@@ -58,29 +55,27 @@ export class App {
     return levels.length ? Math.max(...levels) : null;
   });
 
-  readonly secondsSinceUpdate = computed<number | null>(() => {
-    this.now(); // re-evaluate each tick
+  // Poll liveness only — is the API reachable? Measurement freshness (the age of each
+  // reading) now lives per tile in GaugeCard (#63). live = recent successful poll,
+  // stale = last poll failed or polls stopped succeeding, offline = no poll yet.
+  private readonly secondsSincePoll = computed<number | null>(() => {
     const t = this.state().lastUpdated;
-    return t === null ? null : Math.floor((Date.now() - t) / 1000);
+    return t === null ? null : Math.floor((this.clock.now() - t) / 1000);
   });
 
-  // Liveness: live = recent success, stale = last poll failed or data aged out,
-  // offline = no successful poll yet.
   readonly connection = computed<'live' | 'stale' | 'offline'>(() => {
     const s = this.state();
     if (s.lastUpdated === null) return 'offline';
-    const ago = this.secondsSinceUpdate() ?? 0;
-    if (!s.connected || ago > STALE_AFTER_S) return 'stale';
+    if (!s.connected || (this.secondsSincePoll() ?? 0) > STALE_AFTER_S) return 'stale';
     return 'live';
   });
 
   readonly connectionLabel = computed<string>(() => {
-    const ago = this.secondsSinceUpdate();
     switch (this.connection()) {
       case 'live':
-        return `live · vor ${ago} s`;
+        return 'live';
       case 'stale':
-        return `veraltet · vor ${ago} s`;
+        return 'veraltet';
       default:
         return 'verbinde…';
     }

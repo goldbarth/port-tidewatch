@@ -13,6 +13,8 @@ export interface Gauge {
   timeInStageSeconds: number | null;
   windowMin: number | null;
   windowMax: number | null;
+  measuredAt: string | null; // ISO timestamp of the newest reading
+  cadenceSeconds: number | null; // inferred source cadence (median gap); null until 2 readings
 }
 
 /**

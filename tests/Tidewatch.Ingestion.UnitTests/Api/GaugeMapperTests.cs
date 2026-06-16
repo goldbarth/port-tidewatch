@@ -126,5 +126,66 @@ public sealed class GaugeMapperTests
         Assert.Null(dto.RateMetersPerMin);
         Assert.Null(dto.WindowMin);
         Assert.Null(dto.WindowMax);
+        Assert.Null(dto.MeasuredAt);
+        Assert.Null(dto.CadenceSeconds);
+    }
+
+    [Fact]
+    public void MeasuredAt_is_the_newest_reading_timestamp()
+    {
+        // Window() spaces readings one minute apart from T0; the last is the freshest.
+        var dto = GaugeMapper.ToDto(Snapshot(Window(1.0m, 1.1m, 1.2m)), T0);
+
+        Assert.Equal(T0.AddMinutes(2), dto.MeasuredAt);
+    }
+
+    [Fact]
+    public void Cadence_is_the_median_gap_between_readings()
+    {
+        // 60 s steps → 60 s cadence; independent of the poll that read them.
+        var dto = GaugeMapper.ToDto(Snapshot(Window(1.0m, 1.1m, 1.2m, 1.3m)), T0);
+
+        Assert.Equal(60, dto.CadenceSeconds);
+    }
+
+    [Fact]
+    public void Cadence_ignores_a_single_missed_interval()
+    {
+        // Steady 30 s cadence with one 5-min gap (a missed poll); the median stays at 30 s
+        // where a mean would be inflated.
+        var window = new[]
+        {
+            new Reading("CUX", 1.0m, T0),
+            new Reading("CUX", 1.1m, T0.AddSeconds(30)),
+            new Reading("CUX", 1.2m, T0.AddSeconds(60)),
+            new Reading("CUX", 1.3m, T0.AddSeconds(360)),   // 5-min gap
+            new Reading("CUX", 1.4m, T0.AddSeconds(390)),
+        };
+
+        var dto = GaugeMapper.ToDto(Snapshot(window), T0);
+
+        Assert.Equal(30, dto.CadenceSeconds);
+    }
+
+    [Fact]
+    public void Cadence_is_null_with_fewer_than_two_readings()
+    {
+        var dto = GaugeMapper.ToDto(Snapshot(Window(1.0m)), T0);
+
+        Assert.Null(dto.CadenceSeconds);
+    }
+
+    [Fact]
+    public void Cadence_is_null_when_all_readings_share_a_timestamp()
+    {
+        var window = new[]
+        {
+            new Reading("CUX", 1.0m, T0),
+            new Reading("CUX", 2.0m, T0),
+        };
+
+        var dto = GaugeMapper.ToDto(Snapshot(window), T0);
+
+        Assert.Null(dto.CadenceSeconds);
     }
 }
