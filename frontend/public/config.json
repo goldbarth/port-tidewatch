@@ -1,3 +1,4 @@
 {
-  "apiBaseUrl": "https://<INGESTION_FQDN>"
+  "apiBaseUrl": "https://<INGESTION_FQDN>",
+  "jaegerBaseUrl": ""
 }

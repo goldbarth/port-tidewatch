@@ -293,3 +293,13 @@ footer {
   margin-left: auto;
   color: color-mix(in srgb, var(--pulse) 70%, var(--fg-dim));
 }
+
+.lat-trace {
+  color: var(--fg-faint);
+  text-decoration: none;
+  border-bottom: 1px dotted currentColor;
+  transition: color 0.2s ease;
+}
+.lat-trace:hover {
+  color: var(--accent);
+}
