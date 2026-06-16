@@ -1,5 +1,7 @@
 import { Component, input, computed } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { timer } from 'rxjs';
 import { Gauge } from '../gauge.model';
 
 // Chart geometry. The y-axis is a FIXED level domain (0–6 m NHN) so the stage bands and
@@ -123,6 +125,66 @@ export class GaugeCard {
     const secs = this.gauge().timeInStageSeconds;
     if (secs === null) return 'stabil';
     return `${STAGE_LABELS[this.gauge().stage]} seit ${formatDuration(secs)}`;
+  });
+
+  // ── M8: pipeline latency pulse ──
+  // p95 above this is "degraded" — a clear line for an in-process ingest span (a few ms
+  // healthy; the RabbitMQ ack round-trip dominates). Tunable, deliberately a constant.
+  private static readonly DEGRADED_MS = 250;
+  // Telemetry older than this counts as "no recent data", mirroring the masthead's stale
+  // indicator (#27): a stalled pipeline stops producing spans, so latency stops updating.
+  private static readonly TELEMETRY_STALE_S = 15;
+
+  // Auto-scaled mini sparkline (unlike the fixed-domain level chart, latency has no
+  // natural ceiling — scale each gauge to its own recent range).
+  private static readonly LAT_VB_W = 100;
+  private static readonly LAT_VB_H = 20;
+  readonly latVbWidth = GaugeCard.LAT_VB_W;
+  readonly latVbHeight = GaugeCard.LAT_VB_H;
+
+  // 1 Hz clock so telemetry ageing advances between the 4 s polls.
+  private readonly now = toSignal(timer(0, 1000), { initialValue: 0 });
+
+  private readonly telemetryAgeS = computed<number | null>(() => {
+    this.now(); // re-evaluate each tick
+    const at = this.gauge().latency.lastAt;
+    return at === null ? null : Math.floor((Date.now() - Date.parse(at)) / 1000);
+  });
+
+  private readonly telemetryStale = computed<boolean>(() => {
+    const age = this.telemetryAgeS();
+    return age !== null && age > GaugeCard.TELEMETRY_STALE_S;
+  });
+
+  readonly latencyHealth = computed<'healthy' | 'degraded' | 'none'>(() => {
+    const lat = this.gauge().latency;
+    if (lat.lastMs === null) return 'none';
+    if (this.telemetryStale()) return 'degraded';
+    return (lat.p95Ms ?? 0) > GaugeCard.DEGRADED_MS ? 'degraded' : 'healthy';
+  });
+
+  readonly latencyText = computed<string>(() => {
+    const lat = this.gauge().latency;
+    if (lat.lastMs === null) return 'keine Telemetrie';
+    if (this.telemetryStale()) return 'Telemetrie veraltet';
+    return `${lat.lastMs} ms · p95 ${lat.p95Ms} ms`;
+  });
+
+  readonly latSparkPath = computed<string>(() => {
+    const t = this.gauge().latency.trend;
+    if (t.length < 2) return '';
+    const min = Math.min(...t);
+    const span = Math.max(...t) - min || 1;
+    return (
+      'M ' +
+      t
+        .map((v, i) => {
+          const x = (i / (t.length - 1)) * GaugeCard.LAT_VB_W;
+          const y = GaugeCard.LAT_VB_H * (1 - (v - min) / span);
+          return `${x.toFixed(1)},${y.toFixed(1)}`;
+        })
+        .join(' L ')
+    );
   });
 }
 

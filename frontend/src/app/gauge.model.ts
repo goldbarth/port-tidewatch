@@ -3,6 +3,19 @@ export interface TrendPoint {
   v: number;
 }
 
+/**
+ * Processing-latency pulse for a gauge, derived from the ingest span's duration (M8).
+ * Figures are null and `trend` empty until telemetry has been observed; `lastAt` (ISO
+ * timestamp of the most recent sample) lets the view mark stale telemetry degraded.
+ */
+export interface Latency {
+  lastMs: number | null;
+  p50Ms: number | null;
+  p95Ms: number | null;
+  lastAt: string | null;
+  trend: number[];
+}
+
 export interface Gauge {
   gaugeId: string;
   level: number | null;
@@ -13,6 +26,7 @@ export interface Gauge {
   timeInStageSeconds: number | null;
   windowMin: number | null;
   windowMax: number | null;
+  latency: Latency;
 }
 
 /**
