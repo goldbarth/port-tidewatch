@@ -4,6 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { timer, switchMap, map, catchError, of, scan } from 'rxjs';
 import { Gauge, GaugesState } from './gauge.model';
 import { AppConfig } from './app-config';
+import { POLL_INTERVAL_S } from './freshness';
 
 const INITIAL: GaugesState = { gauges: [], lastUpdated: null, connected: false };
 
@@ -12,13 +13,13 @@ export class GaugesService {
   private readonly http = inject(HttpClient);
   private readonly config = inject(AppConfig);
 
-  // Poll {apiBaseUrl}/api/gauges every 4s. apiBaseUrl is empty for the same-origin
+  // Poll {apiBaseUrl}/api/gauges every POLL_INTERVAL_S. apiBaseUrl is empty for the same-origin
   // stacks (relative /api), set to the ingestion FQDN for Static Web Apps. switchMap
   // drops an in-flight request when the next tick fires. On error we keep the last
   // successful snapshot and only flip `connected` to false — a brief API outage
   // (e.g. a restart) surfaces as a stale indicator instead of blanking the view.
   readonly state = toSignal(
-    timer(0, 4000).pipe(
+    timer(0, POLL_INTERVAL_S * 1000).pipe(
       switchMap(() =>
         this.http.get<Gauge[]>(`${this.config.apiBaseUrl}/api/gauges`).pipe(
           map((gauges) => ({ ok: true as const, gauges })),

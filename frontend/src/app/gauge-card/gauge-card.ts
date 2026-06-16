@@ -1,6 +1,8 @@
-import { Component, input, computed } from '@angular/core';
+import { Component, input, inject, computed } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { Gauge } from '../gauge.model';
+import { Clock } from '../clock';
+import { freshness } from '../freshness';
 
 // Chart geometry. The y-axis is a FIXED level domain (0–6 m NHN) so the stage bands and
 // the peak marker sit at true heights — unlike an auto-scaled sparkline. The bands are
@@ -38,6 +40,8 @@ const STAGE_LABELS: Record<Gauge['stage'], string> = {
 })
 export class GaugeCard {
   readonly gauge = input.required<Gauge>();
+
+  private readonly clock = inject(Clock);
 
   readonly vbWidth = VB_W;
   readonly vbHeight = VB_H;
@@ -123,6 +127,23 @@ export class GaugeCard {
     const secs = this.gauge().timeInStageSeconds;
     if (secs === null) return 'stabil';
     return `${STAGE_LABELS[this.gauge().stage]} seit ${formatDuration(secs)}`;
+  });
+
+  // ── #63 measurement freshness: age of the reading itself, not the poll ──
+  // Driven by the shared 1 Hz clock so it advances between polls.
+  readonly measurementAgeSeconds = computed<number | null>(() => {
+    const t = this.gauge().measuredAt;
+    if (t === null) return null;
+    return Math.max(0, Math.floor((this.clock.now() - Date.parse(t)) / 1000));
+  });
+
+  readonly freshness = computed(() =>
+    freshness(this.measurementAgeSeconds(), this.gauge().cadenceSeconds),
+  );
+
+  readonly freshnessLabel = computed<string>(() => {
+    const age = this.measurementAgeSeconds();
+    return age === null ? '—' : `vor ${formatDuration(age)}`;
   });
 }
 

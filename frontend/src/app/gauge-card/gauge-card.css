@@ -61,11 +61,42 @@ header {
 
 h2 {
   margin: 0;
+  margin-right: auto; /* push badge + freshness to the right edge */
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 1.15rem;
   letter-spacing: 0.02em;
   color: var(--fg);
+}
+
+/* Per-tile measurement freshness: age of the reading, not the poll (#63). */
+.freshness {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  color: var(--fg-dim);
+}
+
+.freshness .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--fg-faint);
+  flex: none;
+}
+
+.fresh-live .dot {
+  background: var(--stage-normal-fg);
+}
+
+.fresh-stale {
+  color: var(--stage-warning-fg);
+}
+.fresh-stale .dot {
+  background: var(--stage-warning-fg);
 }
 
 .badge {

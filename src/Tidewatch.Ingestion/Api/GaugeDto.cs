@@ -13,7 +13,9 @@ public sealed record GaugeDto(
     decimal? RateMetersPerMin,
     long? TimeInStageSeconds,
     decimal? WindowMin,
-    decimal? WindowMax);
+    decimal? WindowMax,
+    DateTimeOffset? MeasuredAt,
+    double? CadenceSeconds);
 
 /// <summary>A single point on a gauge's recent-history trend.</summary>
 public sealed record TrendPointDto(DateTimeOffset T, decimal V);
@@ -46,7 +48,40 @@ public static class GaugeMapper
             RatePerMinute(window),
             timeInStage,
             window.Count > 0 ? window.Min(r => r.Value) : null,
-            window.Count > 0 ? window.Max(r => r.Value) : null);
+            window.Count > 0 ? window.Max(r => r.Value) : null,
+            window.Count > 0 ? window[^1].Timestamp : null,
+            CadenceSeconds(window));
+    }
+
+    /// <summary>
+    /// Expected source cadence in seconds, inferred as the median gap between consecutive
+    /// reading timestamps. The median — not the mean — so one missed poll (a single large
+    /// gap) does not inflate the cadence, consistent with the evaluator's robustness
+    /// (ADR-004). The client derives the per-tile stale threshold from this, so freshness
+    /// adapts to whichever source is active rather than a hard-coded value. Null when
+    /// fewer than two readings span any time.
+    /// </summary>
+    private static double? CadenceSeconds(IReadOnlyList<Reading> window)
+    {
+        if (window.Count < 2)
+            return null;
+
+        var gaps = new List<double>(window.Count - 1);
+        for (var i = 1; i < window.Count; i++)
+        {
+            var seconds = (window[i].Timestamp - window[i - 1].Timestamp).TotalSeconds;
+            if (seconds > 0)
+                gaps.Add(seconds);
+        }
+
+        if (gaps.Count == 0)               // all readings share one timestamp
+            return null;
+
+        gaps.Sort();
+        var mid = gaps.Count / 2;
+        return gaps.Count % 2 == 1
+            ? gaps[mid]
+            : (gaps[mid - 1] + gaps[mid]) / 2;
     }
 
     /// <summary>

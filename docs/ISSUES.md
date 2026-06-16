@@ -274,7 +274,7 @@ thresholds and see the current windows re-classified live, illustrating the
 
 ---
 
-## M8 – Observability made visible (v1.3)
+## M8 – Observability made visible (v1.3) – Reverted
 
 Post-v1.2 work. Surface the OpenTelemetry path that already runs (M3) in the
 dashboard, so the pipeline's health is visible, not just wired. Best built after
@@ -329,3 +329,45 @@ OpenTelemetry instrumentation legible without leaving the app. Clearly an
 - [ ] Explicitly optional: the milestone is complete without it; it ships only
   if time allows.
 
+## M9 – Readability (v1.3.0)
+
+Post-v1.2 work. Make the displayed values legible: the dashboard should make
+clear what the numbers mean and how current they are. Replaces the dropped M8
+(see ADR-003 amendment). Like the M6/M7 items, each has explicit acceptance
+criteria.
+
+### Measurement age instead of poll age in the freshness indicator
+**Labels:** bug, frontend, ingestion
+**Milestone:** M9
+**Introduced by:** M7 (PEGELONLINE source adapter)
+The "live · vor x s" indicator measures the last successful API poll, not the
+age of the measurement. With PEGELONLINE (source cadence ~60 s) this is
+misleading — a fresh poll against a 50 s old station reading reads as "live".
+Switch to age relative to `Reading.Timestamp`, per tile.
+
+**Acceptance criteria:**
+- [x] Per tile, age is computed from `Reading.Timestamp` against current time,
+  not from the poll timestamp.
+- [x] With the Simulator source, age stays ~0 s; "live" remains correct.
+- [x] The stale threshold is source-dependent (Simulator: a few seconds;
+  PEGELONLINE: > 2× source cadence, e.g. > 120 s), derived from the active
+  `ReadingSource`, not hard-coded.
+- [x] A normal 60 s PEGELONLINE interval does not trigger a stale state; only
+  absence beyond the expected cadence does.
+- [x] The existing stale/degraded state is preserved; only the threshold and
+  underlying time basis change.
+- [x] Read-only and same-origin `/api` unchanged.
+
+### Current wall-clock time in the dashboard header
+**Labels:** frontend
+**Milestone:** M9
+A warning system lacks a time anchor: you can see a measurement's age but not
+the current time. A running local clock next to the freshness indicator closes
+that.
+
+**Acceptance criteria:**
+- [ ] Running clock (HH:MM:SS, Europe/Berlin) in the header, next to the live
+  indicator.
+- [ ] Updates client-side every second; no API call, no server state.
+- [ ] Reads together with the per-tile age as a coherent anchor: current time →
+  measurement X s old → status.
