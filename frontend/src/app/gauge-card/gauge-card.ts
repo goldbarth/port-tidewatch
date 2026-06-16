@@ -129,21 +129,30 @@ export class GaugeCard {
     return `${STAGE_LABELS[this.gauge().stage]} seit ${formatDuration(secs)}`;
   });
 
-  // ── #63 measurement freshness: age of the reading itself, not the poll ──
-  // Driven by the shared 1 Hz clock so it advances between polls.
+  // ── #63 freshness ──
+  // Displayed age = how old the measurement itself is (source clock). Honest, but for a
+  // lagging source it sits at minutes even when healthy, so it only drives the label.
   readonly measurementAgeSeconds = computed<number | null>(() => {
     const t = this.gauge().measuredAt;
     if (t === null) return null;
     return Math.max(0, Math.floor((this.clock.now() - Date.parse(t)) / 1000));
   });
 
+  // Staleness keys off arrival recency (our clock): stale only when *new* data stops
+  // flowing, independent of the source's publication lag.
+  private readonly recencySeconds = computed<number | null>(() => {
+    const t = this.gauge().lastReadingAt;
+    if (t === null) return null;
+    return Math.max(0, Math.floor((this.clock.now() - Date.parse(t)) / 1000));
+  });
+
   readonly freshness = computed(() =>
-    freshness(this.measurementAgeSeconds(), this.gauge().cadenceSeconds),
+    freshness(this.recencySeconds(), this.gauge().cadenceSeconds),
   );
 
   readonly freshnessLabel = computed<string>(() => {
     const age = this.measurementAgeSeconds();
-    return age === null ? '—' : `vor ${formatDuration(age)}`;
+    return age === null ? 'kein Messwert' : `Messwert: vor ${formatDuration(age)}`;
   });
 }
 

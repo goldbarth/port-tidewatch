@@ -15,7 +15,8 @@ public sealed record GaugeDto(
     decimal? WindowMin,
     decimal? WindowMax,
     DateTimeOffset? MeasuredAt,
-    double? CadenceSeconds);
+    double? CadenceSeconds,
+    DateTimeOffset? LastReadingAt);
 
 /// <summary>A single point on a gauge's recent-history trend.</summary>
 public sealed record TrendPointDto(DateTimeOffset T, decimal V);
@@ -50,7 +51,8 @@ public static class GaugeMapper
             window.Count > 0 ? window.Min(r => r.Value) : null,
             window.Count > 0 ? window.Max(r => r.Value) : null,
             window.Count > 0 ? window[^1].Timestamp : null,
-            CadenceSeconds(window));
+            CadenceSeconds(window),
+            snapshot.LastReceivedAt);
     }
 
     /// <summary>

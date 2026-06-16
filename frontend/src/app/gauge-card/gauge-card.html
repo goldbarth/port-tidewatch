@@ -2,14 +2,6 @@
   <header>
     <h2>{{ gauge().gaugeId }}</h2>
     <span class="badge">{{ stageLabel() }}</span>
-    <span
-      class="freshness"
-      [class]="'fresh-' + freshness()"
-      [attr.title]="freshness() === 'stale' ? 'Messwert veraltet' : 'Messwert-Alter'"
-    >
-      <span class="dot" aria-hidden="true"></span>
-      <span class="age">{{ freshnessLabel() }}</span>
-    </span>
   </header>
 
   <p class="level">
@@ -53,5 +45,16 @@
     }
   </svg>
 
-  <footer [class]="'stage-' + gauge().stage">{{ stageDuration() }}</footer>
+  <footer
+    [class]="'stage-' + gauge().stage">{{ stageDuration() }}
+
+      <span
+        class="freshness"
+        [class]="'fresh-' + freshness()"
+        [attr.title]="freshness() === 'stale' ? 'Keine neuen Daten' : 'Alter der letzten Messung'"
+      >
+        <span class="dot" aria-hidden="true"></span>
+        <span class="age">{{ freshnessLabel() }}</span>
+      </span>
+  </footer>
 </article>
