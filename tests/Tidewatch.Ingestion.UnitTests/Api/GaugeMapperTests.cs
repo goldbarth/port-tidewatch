@@ -1,6 +1,7 @@
 using Tidewatch.Contracts;
 using Tidewatch.Ingestion.Api;
 using Tidewatch.Ingestion.State;
+using Tidewatch.Ingestion.Telemetry;
 
 namespace Tidewatch.Ingestion.UnitTests.Api;
 
@@ -127,4 +128,35 @@ public sealed class GaugeMapperTests
         Assert.Null(dto.WindowMin);
         Assert.Null(dto.WindowMax);
     }
+
+    [Fact]
+    public void Latency_is_empty_when_no_samples_have_been_observed()
+    {
+        var dto = GaugeMapper.ToDto(Snapshot(Window(1.0m, 1.1m)), T0);
+
+        Assert.Null(dto.Latency.LastMs);
+        Assert.Null(dto.Latency.P50Ms);
+        Assert.Null(dto.Latency.P95Ms);
+        Assert.Null(dto.Latency.LastAt);
+        Assert.Empty(dto.Latency.Trend);
+    }
+
+    [Fact]
+    public void Latency_reports_last_value_percentiles_and_trend()
+    {
+        var samples = Latency(10, 20, 30, 40, 100);
+
+        var dto = GaugeMapper.ToDto(Snapshot(Window(1.0m, 1.1m)), T0, samples);
+
+        Assert.Equal(100, dto.Latency.LastMs);
+        Assert.Equal(samples[^1].At, dto.Latency.LastAt);
+        // nearest-rank over 5 ascending samples: p50 → index 2 (30), p95 → index 4 (100).
+        Assert.Equal(30, dto.Latency.P50Ms);
+        Assert.Equal(100, dto.Latency.P95Ms);
+        Assert.Equal(new double[] { 10, 20, 30, 40, 100 }, dto.Latency.Trend);
+    }
+
+    /// <summary>Latency samples one second apart, in record order.</summary>
+    private static IReadOnlyList<LatencySample> Latency(params double[] ms) =>
+        ms.Select((v, i) => new LatencySample(v, T0.AddSeconds(i))).ToArray();
 }

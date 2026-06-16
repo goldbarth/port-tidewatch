@@ -45,5 +45,26 @@
     }
   </svg>
 
+  <!-- M8: pipeline latency pulse — receipt → evaluation → state change, from the trace -->
+  <div
+    class="latency"
+    [class]="'lat-' + latencyHealth()"
+    [attr.title]="'Verarbeitungslatenz (Empfang → Bewertung → Zustand)'"
+  >
+    <span class="lat-dot" aria-hidden="true"></span>
+    @if (latSparkPath()) {
+      <svg
+        class="lat-spark"
+        [attr.viewBox]="'0 0 ' + latVbWidth + ' ' + latVbHeight"
+        preserveAspectRatio="none"
+        role="img"
+        [attr.aria-label]="'Latenzverlauf für ' + gauge().gaugeId"
+      >
+        <path class="lat-line" [attr.d]="latSparkPath()" vector-effect="non-scaling-stroke" />
+      </svg>
+    }
+    <span class="lat-fig">{{ latencyText() }}</span>
+  </div>
+
   <footer [class]="'stage-' + gauge().stage">{{ stageDuration() }}</footer>
 </article>

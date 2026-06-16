@@ -1,5 +1,6 @@
 using Tidewatch.Contracts;
 using Tidewatch.Ingestion.State;
+using Tidewatch.Ingestion.Telemetry;
 
 namespace Tidewatch.Ingestion.Api;
 
@@ -13,10 +14,24 @@ public sealed record GaugeDto(
     decimal? RateMetersPerMin,
     long? TimeInStageSeconds,
     decimal? WindowMin,
-    decimal? WindowMax);
+    decimal? WindowMax,
+    LatencyDto Latency);
 
 /// <summary>A single point on a gauge's recent-history trend.</summary>
 public sealed record TrendPointDto(DateTimeOffset T, decimal V);
+
+/// <summary>
+/// Processing-latency pulse for a gauge, derived from the ingest span's duration (M8).
+/// Figures are null and <see cref="Trend"/> empty when no telemetry has been observed
+/// yet; <see cref="LastAt"/> lets the client mark stale data degraded, mirroring the
+/// dashboard's connection indicator. Health thresholds are a client/view concern.
+/// </summary>
+public sealed record LatencyDto(
+    double? LastMs,
+    double? P50Ms,
+    double? P95Ms,
+    DateTimeOffset? LastAt,
+    IReadOnlyList<double> Trend);
 
 /// <summary>
 /// Maps the raw <see cref="GaugeSnapshot"/> to the dashboard DTO. Derived monitoring
@@ -30,7 +45,10 @@ public static class GaugeMapper
     private const int TrendBuckets = 24;
     private const string NormalStage = "normal";
 
-    public static GaugeDto ToDto(GaugeSnapshot snapshot, DateTimeOffset now)
+    public static GaugeDto ToDto(
+        GaugeSnapshot snapshot,
+        DateTimeOffset now,
+        IReadOnlyList<LatencySample>? latency = null)
     {
         var window = snapshot.Window;
         var level = window.Count > 0 ? window[^1].Value : (decimal?)null;
@@ -46,8 +64,38 @@ public static class GaugeMapper
             RatePerMinute(window),
             timeInStage,
             window.Count > 0 ? window.Min(r => r.Value) : null,
-            window.Count > 0 ? window.Max(r => r.Value) : null);
+            window.Count > 0 ? window.Max(r => r.Value) : null,
+            MapLatency(latency ?? []));
     }
+
+    /// <summary>
+    /// Shapes the raw latency samples into the pulse DTO: most-recent value, p50/p95 over
+    /// the window (nearest-rank), the time of the last sample for staleness, and the
+    /// ordered series for a sparkline. Empty in, empty out.
+    /// </summary>
+    private static LatencyDto MapLatency(IReadOnlyList<LatencySample> samples)
+    {
+        if (samples.Count == 0)
+            return new LatencyDto(null, null, null, null, []);
+
+        var sorted = samples.Select(s => s.Milliseconds).OrderBy(ms => ms).ToArray();
+        return new LatencyDto(
+            Round(samples[^1].Milliseconds),
+            Round(Percentile(sorted, 50)),
+            Round(Percentile(sorted, 95)),
+            samples[^1].At,
+            samples.Select(s => Round(s.Milliseconds)).ToArray());
+    }
+
+    /// <summary>Nearest-rank percentile over an ascending array.</summary>
+    private static double Percentile(IReadOnlyList<double> ascending, int percentile)
+    {
+        var rank = (int)Math.Ceiling(percentile / 100.0 * ascending.Count);
+        var index = Math.Clamp(rank - 1, 0, ascending.Count - 1);
+        return ascending[index];
+    }
+
+    private static double Round(double ms) => Math.Round(ms, 1);
 
     /// <summary>
     /// Rate-of-change in m/min as the least-squares slope of the window (value against

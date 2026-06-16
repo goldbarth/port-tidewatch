@@ -228,3 +228,68 @@ footer {
   text-transform: lowercase;
   transition: color 0.6s ease;
 }
+
+/* M8 latency pulse: a thin telemetry strip below the level chart. --pulse carries the
+   health tint; healthy is calm green, degraded warm, no-data muted. Deliberately quieter
+   than the domain (level) view — this is "under the hood", not the alert. */
+.latency {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.45rem;
+  font-family: var(--font-mono);
+  font-feature-settings: 'tnum' 1;
+  font-size: 0.62rem;
+  letter-spacing: 0.02em;
+  color: var(--fg-faint);
+}
+.lat-healthy {
+  --pulse: var(--stage-normal-fg);
+}
+.lat-degraded {
+  --pulse: var(--stage-warning-fg);
+}
+.lat-none {
+  --pulse: var(--fg-faint);
+}
+
+.lat-dot {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--pulse);
+}
+/* Only a live, healthy pulse breathes; degraded/none hold steady so they don't read as OK. */
+.lat-healthy .lat-dot {
+  animation: lat-beat 2s ease-in-out infinite;
+}
+
+@keyframes lat-beat {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.lat-spark {
+  flex: none;
+  width: 48px;
+  height: 14px;
+  opacity: 0.9;
+}
+.lat-line {
+  fill: none;
+  stroke: var(--pulse);
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.lat-fig {
+  margin-left: auto;
+  color: color-mix(in srgb, var(--pulse) 70%, var(--fg-dim));
+}
