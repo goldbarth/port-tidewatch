@@ -28,10 +28,25 @@
   </ul>
 </section>
 
-<main class="grid">
-  @for (g of gauges(); track g.gaugeId) {
-    <app-gauge-card [gauge]="g" />
-  } @empty {
-    <p class="waiting">Warte auf Daten…</p>
-  }
-</main>
+<nav class="tabs" aria-label="Ansicht">
+  <button type="button" [class.active]="view() === 'gauges'" (click)="view.set('gauges')">
+    Pegel
+  </button>
+  <button type="button" [class.active]="view() === 'trace'" (click)="view.set('trace')">
+    Under the hood
+  </button>
+</nav>
+
+@if (view() === 'gauges') {
+  <main class="grid">
+    @for (g of gauges(); track g.gaugeId) {
+      <app-gauge-card [gauge]="g" />
+    } @empty {
+      <p class="waiting">Warte auf Daten…</p>
+    }
+  </main>
+} @else {
+  <main>
+    <app-trace-waterfall />
+  </main>
+}
