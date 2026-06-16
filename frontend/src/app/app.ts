@@ -80,4 +80,16 @@ export class App {
         return 'verbinde…';
     }
   });
+
+  // Wall-clock time anchor in Hamburg's zone — reads together with the per-tile age:
+  // current time → measurement N s old → status. Client-side only, no API call.
+  private static readonly timeFormat = new Intl.DateTimeFormat('de-DE', {
+    timeZone: 'Europe/Berlin',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+
+  readonly clockTime = computed<string>(() => App.timeFormat.format(this.clock.now()));
 }

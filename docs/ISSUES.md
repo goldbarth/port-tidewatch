@@ -366,8 +366,8 @@ the current time. A running local clock next to the freshness indicator closes
 that.
 
 **Acceptance criteria:**
-- [ ] Running clock (HH:MM:SS, Europe/Berlin) in the header, next to the live
+- [x] Running clock (HH:MM:SS, Europe/Berlin) in the header, next to the live
   indicator.
-- [ ] Updates client-side every second; no API call, no server state.
-- [ ] Reads together with the per-tile age as a coherent anchor: current time →
+- [x] Updates client-side every second; no API call, no server state.
+- [x] Reads together with the per-tile age as a coherent anchor: current time →
   measurement X s old → status.

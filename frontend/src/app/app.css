@@ -41,7 +41,21 @@
   color: var(--fg-faint);
 }
 
-/* ── Connection / last-updated indicator ── */
+/* ── Time anchor + connection indicator ── */
+.status-cluster {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.clock {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: var(--fg);
+}
+
 .live {
   display: inline-flex;
   align-items: center;
