@@ -64,6 +64,17 @@
       </svg>
     }
     <span class="lat-fig">{{ latencyText() }}</span>
+    @if (jaegerUrl(); as url) {
+      <a
+        class="lat-trace"
+        [attr.href]="url"
+        target="_blank"
+        rel="noopener noreferrer"
+        [attr.title]="'Traces für ' + gauge().gaugeId + ' in Jaeger öffnen'"
+        [attr.aria-label]="'Traces für ' + gauge().gaugeId + ' in Jaeger öffnen'"
+        >Traces ↗</a
+      >
+    }
   </div>
 
   <footer [class]="'stage-' + gauge().stage">{{ stageDuration() }}</footer>

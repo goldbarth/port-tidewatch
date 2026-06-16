@@ -1,8 +1,9 @@
-import { Component, input, computed } from '@angular/core';
+import { Component, input, computed, inject } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { timer } from 'rxjs';
 import { Gauge } from '../gauge.model';
+import { AppConfig } from '../app-config';
 
 // Chart geometry. The y-axis is a FIXED level domain (0–6 m NHN) so the stage bands and
 // the peak marker sit at true heights — unlike an auto-scaled sparkline. The bands are
@@ -185,6 +186,21 @@ export class GaugeCard {
         })
         .join(' L ')
     );
+  });
+
+  // ── M8: Jaeger deep-link ──
+  // Service name from the ingestion OTLP resource (Program.cs AddService).
+  private static readonly JAEGER_SERVICE = 'tidewatch-ingestion';
+
+  private readonly config = inject(AppConfig);
+
+  // Search this gauge's ingest traces in Jaeger, filtered by the gauge.id span tag.
+  // Null when no Jaeger base URL is configured, so the link simply isn't shown.
+  readonly jaegerUrl = computed<string | null>(() => {
+    const base = this.config.jaegerBaseUrl;
+    if (!base) return null;
+    const tags = encodeURIComponent(JSON.stringify({ 'gauge.id': this.gauge().gaugeId }));
+    return `${base}/search?service=${GaugeCard.JAEGER_SERVICE}&tags=${tags}&lookback=1h`;
   });
 }
 

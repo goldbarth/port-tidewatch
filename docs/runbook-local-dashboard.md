@@ -98,6 +98,18 @@ Open **http://localhost:4200** in the browser. You should see:
 > stage quickly, raise a gauge's level by editing the simulator, or publish a
 > high reading manually.
 
+> **Jaeger deep-link (M8):** each card shows a processing-latency pulse; the
+> "Traces ↗" link next to it opens that gauge's ingest traces in Jaeger. It only
+> appears when `jaegerBaseUrl` is set in `frontend/public/config.json`. For the
+> local Jaeger from step 2:
+>
+> ```json
+> { "apiBaseUrl": "", "jaegerBaseUrl": "http://localhost:16687" }
+> ```
+>
+> Leave `jaegerBaseUrl` empty (the repo default) to hide the link where Jaeger
+> isn't reachable. Reset the file afterwards (`git checkout frontend/public/config.json`).
+
 ---
 
 ## Quick API checks (without the browser)
