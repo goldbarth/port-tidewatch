@@ -1,35 +1,32 @@
-<p align="center">
-  <img src="docs/assets/port-tidewatch-logo.svg" alt="Tidewatch" width="96" height="96" />
-</p>
+<div align="center">
 
-<h1 align="center">Tidewatch</h1>
-<p align="center">
-  <strong>Water-Level Ingestion &amp; Storm-Surge Alerting</strong><br>
-  <sub><code>port-tidewatch</code></sub>
-</p>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/tidewatch-wordmark-dark.svg">
+  <img alt="Tidewatch" src="docs/assets/tidewatch-wordmark-light.svg" width="390">
+</picture>
 
-<p align="center">
-A small, focused ingestion service for port water-level telemetry, with
-threshold-based storm-surge alerting and a read-only monitoring dashboard.
-</p>
+**Water-Level Ingestion &amp; Storm-Surge Alerting**
 
-<p align="center">
-<a href="https://github.com/goldbarth/port-tidewatch/releases"><img src="https://img.shields.io/github/v/release/goldbarth/port-tidewatch?logo=github&label=release" alt="Release"></a>
-<a href="https://github.com/goldbarth/port-tidewatch/actions/workflows/ci.yml"><img src="https://github.com/goldbarth/port-tidewatch/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-<a href="https://github.com/goldbarth/port-tidewatch/actions/workflows/deploy-container-apps.yml"><img src="https://img.shields.io/github/actions/workflow/status/goldbarth/port-tidewatch/deploy-container-apps.yml?label=deploy&logo=github" alt="Deploy"></a>
-</p>
+A small, focused ingestion service for port water-level telemetry, with threshold-based storm-surge alerting and a read-only monitoring dashboard.
 
-<p align="center">
-<img src="https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white" alt=".NET 10">
-<img src="https://img.shields.io/badge/RabbitMQ-FF6600?logo=rabbitmq&logoColor=white" alt="RabbitMQ">
-<img src="https://img.shields.io/badge/OpenTelemetry-000000?logo=opentelemetry&logoColor=white" alt="OpenTelemetry">
-<img src="https://img.shields.io/badge/Angular-DD0031?logo=angular&logoColor=white" alt="Angular">
-<img src="https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white" alt="Docker">
-<img src="https://img.shields.io/badge/Kubernetes-326CE5?logo=kubernetes&logoColor=white" alt="Kubernetes">
-<img src="https://img.shields.io/badge/Argo_CD-EF7B4D?logo=argo&logoColor=white" alt="Argo CD">
+[![Release](https://img.shields.io/github/v/release/goldbarth/port-tidewatch?label=release&style=flat-square&labelColor=26201A&color=14807A)](https://github.com/goldbarth/port-tidewatch/releases/latest)
+[![CI](https://img.shields.io/github/actions/workflow/status/goldbarth/port-tidewatch/ci.yml?branch=main&label=CI&style=flat-square&labelColor=26201A)](https://github.com/goldbarth/port-tidewatch/actions/workflows/ci.yml)
+[![Deploy](https://img.shields.io/github/actions/workflow/status/goldbarth/port-tidewatch/deploy-container-apps.yml?branch=main&label=deploy&style=flat-square&labelColor=26201A)](https://github.com/goldbarth/port-tidewatch/actions/workflows/deploy-container-apps.yml)
+[![ADRs](https://img.shields.io/badge/ADRs-4-C68A35?style=flat-square&labelColor=26201A)](docs/adrs)
+[![License: MIT](https://img.shields.io/badge/license-MIT-C68A35?style=flat-square&labelColor=26201A)](LICENSE)
 
-> 📖 **Written up on my site:** [the project](https://www.goldbarth.dev/projects/port-tidewatch),
-> and — in German, leicht verdaulich — [the surge-evaluator decision (ADR-004)](https://www.goldbarth.dev/decisions/surge-evaluator-decisions).
+![.NET 10](https://img.shields.io/badge/.NET-10-14807A?style=flat-square&logo=dotnet&logoColor=2DD4BF&labelColor=26201A)
+![RabbitMQ](https://img.shields.io/badge/-RabbitMQ-14807A?style=flat-square&logo=rabbitmq&logoColor=2DD4BF&labelColor=26201A)
+![OpenTelemetry](https://img.shields.io/badge/-OpenTelemetry-14807A?style=flat-square&logo=opentelemetry&logoColor=2DD4BF&labelColor=26201A)
+![Angular](https://img.shields.io/badge/-Angular-14807A?style=flat-square&logo=angular&logoColor=2DD4BF&labelColor=26201A)
+![Docker](https://img.shields.io/badge/-Docker-14807A?style=flat-square&logo=docker&logoColor=2DD4BF&labelColor=26201A)
+![Kubernetes](https://img.shields.io/badge/-Kubernetes-14807A?style=flat-square&logo=kubernetes&logoColor=2DD4BF&labelColor=26201A)
+![Argo CD](https://img.shields.io/badge/-Argo%20CD-14807A?style=flat-square&logo=argo&logoColor=2DD4BF&labelColor=26201A)
+
+</div>
+
+> 📖 **Written up on my site:** [the project](https://goldbarth.dev/projects/port-tidewatch/),
+> and, in German (leicht verdaulich), [the surge-evaluator decisions (ADR-004)](https://goldbarth.dev/projects/port-tidewatch/surge-evaluator/).
 
 <p align="center">
   <img src="docs/assets/demo/tidewatch-dashboard-screenshot-4.png" alt="Tidewatch dashboard on the live PEGELONLINE Elbe feed — four Hamburg gauges, all normal" width="860">
@@ -140,7 +137,7 @@ implementation is not finished.
 | 001 | Where threshold logic lives   | [Threshold evaluation lives in the ingestion service](docs/adrs/001-threshold-logic-in-service.md) |
 | 002 | Dashboard client state        | [Angular state structure](docs/adrs/002-angular-state-structure.md)                               |
 | 003 | Deploy target                 | [Azure Container Apps vs. Kubernetes + Argo CD](docs/adrs/003-container-apps-vs-kubernetes.md)     |
-| 004 | Stage-determination algorithm | [Surge evaluator algorithm](docs/adrs/004-surge-evaluator-algorithm.md) · [Blog (DE)](https://www.goldbarth.dev/decisions/surge-evaluator-decisions) |
+| 004 | Stage-determination algorithm | [Surge evaluator algorithm](docs/adrs/004-surge-evaluator-algorithm.md) · [Blog (DE)](https://goldbarth.dev/projects/port-tidewatch/surge-evaluator/) |
 
 ---
 
